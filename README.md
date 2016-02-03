@@ -7,7 +7,7 @@ Scala framework that manages external services for tests (mock HTTP services, do
 ### Add the test-service-kit dependency to your project
 
 ```scala
-resolvers += "Sonatype Nexus Repository Manager" at "https://maven.zalando.net/content/groups/public/content/repositories/releases"
+resolvers += "Zalando Releases" at "https://maven.zalando.net/content/groups/public/content/repositories/releases"
 
 libraryDependencies += "org.zalando" %% "test-service-kit" % "0.1"
 ```
