@@ -11,6 +11,25 @@ resolvers += "Zalando Releases" at "https://maven.zalando.net/content/groups/pub
 
 libraryDependencies += "org.zalando" %% "test-service-kit" % "0.1"
 ```
+### Mixin trait
+Add TestServiceKit trait to your tests:
+
+For ScalaTest:
+```scala
+case MyCoolSpec extends FlatSpec with ScalaTestServiceKit { ... }
+```
+
+For specs2: TBD
+
+### Define services used by test
+```scala
+case MyCoolSpec extends FlatSpec with ScalaTestServiceKit {
+  val databaseTestService = new DatabaseTestService(databaseConfig) // Generic
+  val oauthTestService = new OauthTestService(webServiceConfig) // Specific to your domain
+  override def testServices: List[TestService] = List(databaseTestService, oauthTestService)
+}
+
+```
 
 ## License
 
