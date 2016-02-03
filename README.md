@@ -3,6 +3,15 @@ Test Service Kit
 
 Scala framework that manages external services for tests (mock HTTP services, docker containers, databases, etc.)
 
+## Usage
+### Add the test-service-kit dependency to your project
+
+```scala
+resolvers += "Sonatype Nexus Repository Manager" at "https://maven.zalando.net/content/groups/public/content/repositories/releases"
+
+libraryDependencies += "org.zalando" %% "test-service-kit" % "0.1"
+```
+
 ## License
 
 The MIT License (MIT)

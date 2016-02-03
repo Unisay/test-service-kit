@@ -1,17 +1,43 @@
-lazy val `test-service-kit` = (project in file("."))
-  .settings(name := "test-service-kit")
-  .settings(version := "0.1.1")
-  .settings(scalaVersion := "2.11.7")
-  .settings(organization := "de.zalando")
-  .settings(licenses += ("MIT", url("http://opensource.org/licenses/MIT")))
-  .settings(publishMavenStyle := true)
-  .settings(bintrayPackageLabels := Seq("scala", "test", "kit"))
-  .settings(bintrayRepository := "maven")
-  .settings(bintrayOrganization := None)
-  .settings(libraryDependencies ++= Seq(
-    "org.slf4j"                  %  "slf4j-api"                   % "1.7.12",
-    "ch.qos.logback"             %  "logback-classic"             % "1.1.3",
-    "com.typesafe.scala-logging" %% "scala-logging"               % "3.0.0",
-    "org.scalatest"              %% "scalatest"                   % "2.2.5"    % "test",
-    "org.scalamock"              %% "scalamock-scalatest-support" % "3.2.2"    % "test"
-  ))
+import _root_.sbt.Resolver
+import sbt.Keys._
+
+name := "test-service-kit"
+
+organization := "org.zalando"
+
+version := "0.2-SNAPSHOT"
+
+isSnapshot := true
+
+scalaVersion := "2.11.7"
+
+publishTo := {
+    val nexus = "https://maven.zalando.net/"
+    val realm = "Sonatype Nexus Repository Manager API"
+    if (isSnapshot.value)
+        Some(realm at nexus + "content/repositories/snapshots")
+    else
+        Some(realm at nexus + "content/repositories/releases")
+}
+
+credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+
+publishMavenStyle := true
+
+resolvers += Resolver.mavenLocal
+resolvers += "Sonatype Nexus Repository Manager" at "https://maven.zalando.net/content/groups/public"
+
+libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.14"
+libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.3"
+libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6"
+libraryDependencies += "org.mock-server" % "mockserver-netty" % "3.10.2"
+libraryDependencies += "com.github.docker-java" % "docker-java" % "2.1.2"
+libraryDependencies += "com.opentable.components" % "otj-pg-embedded" % "0.4.4"
+
+lazy val providedDependencies = Seq(
+  "org.mock-server" % "mockserver-netty" % "3.10.2",
+  "com.github.docker-java" % "docker-java" % "2.1.2",
+  "com.opentable.components" % "otj-pg-embedded" % "0.4.4"
+)
+
+libraryDependencies ++= providedDependencies.map(_ % "provided")
