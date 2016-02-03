@@ -9,21 +9,24 @@ Scala framework that manages external services for tests (mock HTTP services, do
 ```scala
 resolvers += "Zalando Releases" at "https://maven.zalando.net/content/groups/public/content/repositories/releases"
 
-libraryDependencies += "org.zalando" %% "test-service-kit" % "0.1"
+libraryDependencies += "org.zalando" %% "test-service-kit" % "0.2"
 ```
 ### Mixin trait
-Add TestServiceKit trait to your tests:
+Add ScalatestServiceKit trait to your tests:
 
 For ScalaTest:
 ```scala
-case MyCoolSpec extends FlatSpec with ScalaTestServiceKit { ... }
+case MyCoolSpec extends FlatSpec with ScalatestServiceKit { ... }
 ```
 
-For specs2: TBD
+For specs2: 
+```
+Not implemented yet, pull requests are welcome.
+```
 
 ### Define services used by test
 ```scala
-case MyCoolSpec extends FlatSpec with ScalaTestServiceKit {
+case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
   val databaseTestService = new DatabaseTestService(databaseConfig) // Generic
   val oauthTestService = new OauthTestService(webServiceConfig) // Specific to your domain
   override def testServices: List[TestService] = List(databaseTestService, oauthTestService)

@@ -5,7 +5,7 @@ import org.zalando.test.kit.service.TestService
 
 import scala.util.Try
 
-trait ScalaTestServiceKit extends BeforeAndAfterAll with TestServiceKit {
+trait ScalatestServiceKit extends BeforeAndAfterAll with TestServiceKit {
   this: Suite ⇒
 
   override abstract def withFixture(test: NoArgTest): Outcome = {
