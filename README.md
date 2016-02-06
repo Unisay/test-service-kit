@@ -11,6 +11,34 @@ resolvers += "Zalando Releases" at "https://maven.zalando.net/content/groups/pub
 
 libraryDependencies += "org.zalando" %% "test-service-kit" % "0.2"
 ```
+
+### Implement application-specific test services by extending base services:
+
+Currently there are 3 base services available:
+
+#### MockServer (www.mock-server.com)
+... represents Mock-Server instance.
+
+```scala
+class MyOauthTestService extends MockServerTestService {
+   // implement required methods here
+}
+```
+See [MockServerTestService](/src/main/scala/org/zalando/test/kit/service/MockServerTestService.scala) 
+
+#### Docker Container
+... represents Docker container.
+
+```scala
+class MyDockerContainerTestService extends DockerTestService {
+   // implement required methods here
+}
+```
+See [DockerTestService](/src/main/scala/org/zalando/test/kit/service/DockerTestService.scala)
+
+#### DatabaseTestService (Embedded PostgreSQL)
+See [DatabaseTestService](/src/main/scala/org/zalando/test/kit/service/DatabaseTestService.scala)
+
 ### Mixin trait
 Add ScalatestServiceKit trait to your tests:
 
@@ -27,12 +55,15 @@ Not implemented yet, pull requests are welcome.
 ### Define services used by test
 ```scala
 case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
-  val databaseTestService = new DatabaseTestService(databaseConfig) // Generic
-  val oauthTestService = new OauthTestService(webServiceConfig) // Specific to your domain
+  val databaseTestService = new DatabaseTestService(databaseConfig) // May be used directly, without extending it
+  val oauthTestService = new MyOauthTestService(webServiceConfig) // Specific to your application
+  val dockerContainer = new MyDockerContainerTestService(dockerContainerConfig) // Specific to your application
   override def testServices: List[TestService] = List(databaseTestService, oauthTestService)
 }
 
 ```
+
+After that lifecycle of each test service will be attached to the test lifecycle: they are started/reset/stopped by your testing framework (Scalatest, Specs2, ...). 
 
 ## License
 
