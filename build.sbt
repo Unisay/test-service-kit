@@ -30,9 +30,6 @@ resolvers += "Sonatype Nexus Repository Manager" at "https://maven.zalando.net/c
 libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.14"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.3"
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6"
-libraryDependencies += "org.mock-server" % "mockserver-netty" % "3.10.2"
-libraryDependencies += "com.github.docker-java" % "docker-java" % "2.1.2"
-libraryDependencies += "com.opentable.components" % "otj-pg-embedded" % "0.4.4"
 
 lazy val providedDependencies = Seq(
   "org.mock-server" % "mockserver-netty" % "3.10.2",
