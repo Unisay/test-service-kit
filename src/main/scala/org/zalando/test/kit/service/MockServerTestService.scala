@@ -2,7 +2,7 @@ package org.zalando.test.kit.service
 
 import org.mockserver.client.server.MockServerClient
 import org.mockserver.integration.ClientAndServer
-import org.mockserver.model.HttpRequest
+import org.mockserver.model.{HttpRequest, HttpResponse}
 import org.mockserver.verify.VerificationTimes
 import org.mockserver.verify.VerificationTimes._
 import org.scalatest.concurrent.AsyncAssertions
@@ -67,4 +67,6 @@ abstract class MockServerTestService(val mockServerPort: Int) extends TestServic
   def expectNoInteractions(): Unit =
     expect(HttpRequest.request, exactly(0))
 
+  def expectResponseWithStatus(status: Int, times: VerificationTimes = once): Unit =
+    mockServer when verify(HttpRequest.request, times) respond HttpResponse.response.withStatusCode(status)
 }
