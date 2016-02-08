@@ -11,7 +11,7 @@ Scala framework that manages external services for tests (mock HTTP services, do
 ```scala
 resolvers += "Zalando Releases" at "https://maven.zalando.net/content/groups/public/content/repositories/releases"
 
-libraryDependencies += "org.zalando" %% "test-service-kit" % "0.2"
+libraryDependencies += "org.zalando" %% "test-service-kit" % "0.3.1"
 ```
 
 ### Implement application-specific test services by extending base services:
