@@ -5,9 +5,9 @@ name := "test-service-kit"
 
 organization := "org.zalando"
 
-version := "0.3.2-SNAPSHOT"
+version := "0.3.3"
 
-isSnapshot := true
+isSnapshot := false
 
 scalaVersion := "2.11.7"
 
@@ -33,7 +33,7 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6"
 
 lazy val providedDependencies = Seq(
   "org.mock-server" % "mockserver-netty" % "3.10.2",
-  "com.github.docker-java" % "docker-java" % "2.1.2",
+  "com.github.docker-java" % "docker-java" % "2.1.4",
   "com.opentable.components" % "otj-pg-embedded" % "0.4.4"
 )
 
