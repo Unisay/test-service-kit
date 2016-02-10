@@ -5,9 +5,9 @@ name := "test-service-kit"
 
 organization := "org.zalando"
 
-version := "0.3.3"
+version := "0.3.4-SNAPSHOT"
 
-isSnapshot := false
+isSnapshot := true
 
 scalaVersion := "2.11.7"
 
