@@ -1,31 +1,53 @@
-import _root_.sbt.Resolver
 import sbt.Keys._
 
 name := "test-service-kit"
 
 organization := "org.zalando"
 
-version := "0.3.4-SNAPSHOT"
+version := "0.3.3"
 
-isSnapshot := true
+isSnapshot := false
 
 scalaVersion := "2.11.7"
 
 publishTo := {
-    val nexus = "https://maven.zalando.net/"
-    val realm = "Sonatype Nexus Repository Manager API"
+    val nexus = "https://oss.sonatype.org/"
     if (isSnapshot.value)
-        Some(realm at nexus + "content/repositories/snapshots")
+        Some("snapshots" at nexus + "content/repositories/snapshots")
     else
-        Some(realm at nexus + "content/repositories/releases")
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
-
-credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 publishMavenStyle := true
 
-resolvers += Resolver.mavenLocal
-resolvers += "Sonatype Nexus Repository Manager" at "https://maven.zalando.net/content/groups/public"
+publishArtifact in Test := false
+
+pomIncludeRepository := { _ => false }
+
+sonatypeProfileName := "org.zalando"
+
+pomExtra :=
+  <url>https://github.com/zalando/scala-jsonapi</url>
+  <licenses>
+    <license>
+      <name>MIT</name>
+      <url>http://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <url>git@github.com:zalando/test-service-kit.git</url>
+    <connection>scm:git:git@github.com:zalando/test-service-kit.git</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>ylazaryev</id>
+      <name>Yuriy Lazaryev</name>
+      <url>https://github.com/Unisay</url>
+    </developer>
+  </developers>
+
+credentials += Credentials(Path.userHome / ".ivy2" / ".credentials-ossrh")
 
 libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.14"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.3"
