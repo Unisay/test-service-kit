@@ -26,7 +26,7 @@ pomIncludeRepository := { _ => false }
 
 sonatypeProfileName := "org.zalando"
 
-pomExtra :=
+pomExtra := (
   <url>https://github.com/zalando/scala-jsonapi</url>
   <licenses>
     <license>
@@ -46,6 +46,7 @@ pomExtra :=
       <url>https://github.com/Unisay</url>
     </developer>
   </developers>
+)
 
 libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.14"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.3"
