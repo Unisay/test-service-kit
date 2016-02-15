@@ -9,7 +9,7 @@ Scala framework that manages external services for tests (mock HTTP services, do
 ### Add the test-service-kit dependency to your project
 
 ```scala
-libraryDependencies += "org.zalando" %% "test-service-kit" % "0.3.3"
+libraryDependencies += "org.zalando" %% "test-service-kit" % "0.3.4"
 ```
 
 ### Implement application-specific test services by extending base services:
