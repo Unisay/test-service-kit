@@ -14,7 +14,8 @@ import scala.util.Try
 
 case class DockerApiConfig(socket: String, url: String)
 case class SharedDirectoryConfig(internal: String, external: String)
-case class DockerTestServiceConfig(api: DockerApiConfig,
+case class DockerTestServiceConfig(imageNameSubstring: String,
+                                   api: DockerApiConfig,
                                    portBindings: Set[Int],
                                    shared: SharedDirectoryConfig,
                                    commandLineArguments: Seq[String])
@@ -36,7 +37,7 @@ abstract class DockerTestService(val dockerConfig: DockerTestServiceConfig) exte
   protected def awaitContainer(): Unit
 
   private lazy val container: Option[(ContainerId, ResultCallback[Frame])] = for {
-    imageName <- findMostRecentImageName("article-service")
+    imageName <- findMostRecentImageName(dockerConfig.imageNameSubstring)
     containerId = startDockerContainer(imageName, s"dockerhost:$dockerHostIp", dockerConfig.portBindings)
     attachedStream = attachContainer(containerId)
   } yield (containerId, attachedStream)
@@ -105,8 +106,8 @@ abstract class DockerTestService(val dockerConfig: DockerTestServiceConfig) exte
 
   private def attachContainer(containerId: ContainerId): ResultCallback[Frame] = {
     val callback = new AttachContainerResultCallback {
-      override def onNext(article: Frame): Unit = {
-        logger.info("\n> {}", new String(article.getPayload).trim)
+      override def onNext(frame: Frame): Unit = {
+        logger.info("\n> {}", new String(frame.getPayload).trim)
       }
 
       override def onError(throwable: Throwable): Unit = {
