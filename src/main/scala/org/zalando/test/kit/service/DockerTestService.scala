@@ -9,9 +9,11 @@ import com.github.dockerjava.core.command.AttachContainerResultCallback
 import com.github.dockerjava.core.{DockerClientBuilder, DockerClientConfig}
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.duration.FiniteDuration
 import scala.sys.process.Process
 import scala.util.Try
 
+case class HealthCheckConfig(url: String, timeout: FiniteDuration)
 case class DockerApiConfig(socket: String, url: String)
 case class SharedDirectoryConfig(internal: String, external: String)
 case class DockerTestServiceConfig(imageNameSubstring: String,
