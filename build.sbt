@@ -51,6 +51,7 @@ pomExtra := (
 libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.14"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.3"
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6"
+libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.11.2" % "test"
 
 lazy val providedDependencies = Seq(
   "org.mock-server" % "mockserver-netty" % "3.10.2",
