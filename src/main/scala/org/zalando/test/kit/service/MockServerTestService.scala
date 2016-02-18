@@ -14,7 +14,8 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
-class MockServerTestService(override val name: String, val port: Int) extends TestService with AsyncAssertions {
+class MockServerTestService(override val name: String, val port: Int, val host: String = "localhost")
+  extends TestService with AsyncAssertions {
 
   private val logger = LoggerFactory.getLogger(classOf[MockServerTestService])
 
@@ -51,7 +52,7 @@ class MockServerTestService(override val name: String, val port: Int) extends Te
     }
   }
 
-  val apiUrl = s"http://localhost:$port"
+  val apiUrl = s"http://$host:$port"
 
   def resetExpectations(): Unit = {
     expectations.clear()

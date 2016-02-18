@@ -3,10 +3,11 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %logger{36}  %-5level | %msg%n</pattern>
         </encoder>
     </appender>
 
+    <logger name="org.zalando.test.kit" level="debug" />
     <logger name="org.mockserver" level="warn" />
 
     <root level="info">

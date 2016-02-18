@@ -5,6 +5,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
 import org.zalando.test.kit.service.{DockerContainerConfig, DockerContainerTestService}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
 import scalaj.http._
 
@@ -17,7 +18,7 @@ class DockerContainerTestServiceSpec extends FeatureSpec with GivenWhenThen with
   val container1 = new DockerContainerTestService(config.get[DockerContainerConfig]("sample-container-1"))
   val container2 = new DockerContainerTestService(config.get[DockerContainerConfig]("sample-container-2"))
 
-  override def testServices = List(container1, container2)
+  override def testServices = container1 || container2
 
   scenario("Start sample docker container before and stop it after test suite") {
     Given("Sample docker containers expose resource via HTTP")

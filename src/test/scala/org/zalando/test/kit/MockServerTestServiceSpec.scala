@@ -3,6 +3,7 @@ package org.zalando.test.kit
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
 import org.zalando.test.kit.service.MockServerTestService
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scalaj.http._
 
 /**
@@ -13,7 +14,7 @@ class MockServerTestServiceSpec extends FeatureSpec with GivenWhenThen with Must
   val sampleRestService1 = new MockServerTestService("Sample REST service mock 1", 8080) with SampleResponses
   val sampleRestService2 = new MockServerTestService("Sample REST service mock 2", 8081) with SampleResponses
 
-  override def testServices = List(sampleRestService1, sampleRestService2)
+  override def testServices = sampleRestService1 || sampleRestService2
 
   scenario("Start sample rest service mock before and stop it after test suite") {
     Given("Mocks respond with 'healthy'")

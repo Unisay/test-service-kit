@@ -48,6 +48,7 @@ pomExtra := (
   </developers>
 )
 
+libraryDependencies += "com.typesafe.scala-logging" % "scala-logging_2.11" % "3.1.0"
 libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.14"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.3"
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6"
