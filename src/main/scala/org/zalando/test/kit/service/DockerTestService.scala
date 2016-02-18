@@ -18,7 +18,7 @@ case class DockerApiConfig(socket: String, url: String)
 case class SharedDirectoryConfig(internal: String, external: String)
 case class DockerTestServiceConfig(imageNameSubstring: String,
                                    api: DockerApiConfig,
-                                   portBindings: Set[Int],
+                                   portBindings: Map[Int, Int],
                                    shared: SharedDirectoryConfig,
                                    commandLineArguments: Seq[String])
 
@@ -51,16 +51,15 @@ abstract class DockerTestService(val dockerConfig: DockerTestServiceConfig) exte
       sys.error("At least one docker image has to be published locally. Use sbt docker:publishLocal")
   }
 
-  private def startDockerContainer(imageName: String, extraHosts: String, ports: Set[Int]): ContainerId = {
-    val portBindings = new Ports()
-    ports.foreach { port ⇒
-      portBindings.bind(ExposedPort.tcp(port), Ports.Binding(port))
-    }
-
+  private def startDockerContainer(imageName: String, extraHosts: String, ports: Map[Int, Int]): ContainerId = {
     val containerId = docker.createContainerCmd(imageName)
-      .withExposedPorts(ports.map(ExposedPort.tcp).toSeq: _*)
+      .withExposedPorts(ports.keys.map(ExposedPort.tcp).toSeq: _*)
       .withExtraHosts(extraHosts)
-      .withPortBindings(portBindings)
+      .withPortBindings {
+          val portBindings = new Ports()
+          ports.foreach(port ⇒ portBindings.bind(ExposedPort.tcp(port._1), Ports.Binding(port._2)))
+          portBindings
+      }
       .withCmd(dockerConfig.commandLineArguments: _*)
       .withBinds(new Bind(
         new File(dockerConfig.shared.external).getAbsolutePath,
