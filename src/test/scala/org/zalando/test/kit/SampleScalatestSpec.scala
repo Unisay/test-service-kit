@@ -12,19 +12,15 @@ import scalaj.http._
 class SampleScalatestSpec extends FeatureSpec with GivenWhenThen with MustMatchers with ScalatestServiceKit {
 
   val sampleRestService = new SampleRestService
-  val sampleDockerContainer = new SampleDockerContainer(
-    config = new SampleDockerContainerConfig(
-        docker = new DockerTestServiceConfig(
-        imageNameSubstring = "gliderlabs/alpine", // minimalistic linux image
-        api = new DockerApiConfig("/var/run/docker.sock", "http://127.0.0.1:2375"),
-        portBindings = Map(80 → 8888),
-        shared = new SharedDirectoryConfig(
-          internal = "/www",
-          external = getClass.getResource("/shared_with_docker").getFile),
-        commandLineArguments = "busybox httpd -f -p 80 -h /www".split("\\s")
-      )
-    )
-  )
+  val sampleDockerContainer = new SampleDockerContainer(new DockerTestServiceConfig(
+    imageNameSubstring = "gliderlabs/alpine", // minimalistic linux image
+    api = new DockerApiConfig("/var/run/docker.sock", "http://127.0.0.1:2375"),
+    portBindings = Map(80 → 8888),
+    shared = new SharedDirectoryConfig(
+      internal = "/www",
+      external = getClass.getResource("/shared_with_docker").getFile),
+    commandLineArguments = "busybox httpd -f -p 80 -h /www".split("\\s")
+  ))
 
   override def testServices = List(sampleRestService, sampleDockerContainer)
 
@@ -62,13 +58,12 @@ class SampleScalatestSpec extends FeatureSpec with GivenWhenThen with MustMatche
       When("Request to the exposed resource is made")
       val response = Http(sampleDockerContainer.sampleResourceUrl).asString
 
-      Then("Response is successful")
+      Then("Successful response contains data from shared folder")
       response.is2xx mustBe true
       response.body mustBe Source.fromFile("src/test/resources/shared_with_docker/resource.htm").mkString
     }
 
   }
-
 
 
 }
