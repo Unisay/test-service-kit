@@ -8,7 +8,7 @@ import com.github.dockerjava.api.model._
 import com.github.dockerjava.core.command.AttachContainerResultCallback
 import com.github.dockerjava.core.{DockerClientBuilder, DockerClientConfig}
 import org.slf4j.LoggerFactory
-import org.zalando.test.kit.service.DockerContainerTestService.immediatelyReady
+import org.zalando.test.kit.service.DockerContainerTestService.ready
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
@@ -29,7 +29,7 @@ case class DockerContainerConfig(imageNameSubstring: String,
                                  commandLineArguments: Seq[String] = Seq.empty)
 
 object DockerContainerTestService {
-  implicit val immediatelyReady: (DockerContainerTestService) ⇒ Future[Unit] = _ ⇒ Future.successful()
+  implicit val ready: (DockerContainerTestService) ⇒ Future[Unit] = _ ⇒ Future.successful(())
 }
 
 class DockerContainerTestService(override val name: String,
@@ -38,7 +38,7 @@ class DockerContainerTestService(override val name: String,
                                  val portBindings: Set[PortBindingConfig] = Set.empty,
                                  val sharedFolders: Set[SharedFolderConfig] = Set.empty,
                                  val commandLineArguments: Seq[String] = Seq.empty)
-                                (implicit val readinessChecker: (DockerContainerTestService) ⇒ Future[Unit] = immediatelyReady)
+                                (implicit val readinessChecker: (DockerContainerTestService) ⇒ Future[Unit] = ready)
   extends TestService {
 
   def this(config: DockerContainerConfig) = this(

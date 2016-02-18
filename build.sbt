@@ -63,3 +63,5 @@ lazy val providedDependencies = Seq(
 )
 
 libraryDependencies ++= providedDependencies.map(_ % "provided")
+
+scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
