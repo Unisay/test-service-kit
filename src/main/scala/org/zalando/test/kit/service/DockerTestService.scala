@@ -14,22 +14,25 @@ import scala.sys.process.Process
 import scala.util.Try
 
 case class HealthCheckConfig(url: String, timeout: FiniteDuration)
-case class DockerApiConfig(socket: String, url: String)
-case class SharedDirectoryConfig(internal: String, external: String)
-case class DockerTestServiceConfig(imageNameSubstring: String,
-                                   api: DockerApiConfig,
-                                   portBindings: Map[Int, Int],
-                                   shared: SharedDirectoryConfig,
-                                   commandLineArguments: Seq[String])
 
-abstract class DockerTestService(val dockerConfig: DockerTestServiceConfig) extends TestService {
+case class PortBindingConfig(internal: Int, external: Int)
+
+case class SharedFolderConfig(internal: String, external: String)
+
+case class DockerTestServiceConfig(imageNameSubstring: String,
+                                   apiUri: String,
+                                   portBindings: Set[PortBindingConfig] = Set.empty,
+                                   sharedFolders: Set[SharedFolderConfig] = Set.empty,
+                                   commandLineArguments: Seq[String] = Seq.empty)
+
+abstract class DockerTestService(val config: DockerTestServiceConfig) extends TestService {
 
   type ContainerId = String
 
   private val logger = LoggerFactory.getLogger(classOf[DockerTestService])
 
   private lazy val dockerClientConfig = DockerClientConfig.createDefaultConfigBuilder()
-    .withUri(getDockerApiUri(dockerConfig.api.socket, dockerConfig.api.url))
+    .withUri(if (new File(config.apiUri).exists) s"unix://${config.apiUri}" else config.apiUri)
     .build()
 
   private lazy val docker = DockerClientBuilder.getInstance(dockerClientConfig).build()
@@ -39,8 +42,12 @@ abstract class DockerTestService(val dockerConfig: DockerTestServiceConfig) exte
   protected def awaitContainer(): Unit
 
   private lazy val container: Option[(ContainerId, ResultCallback[Frame])] = for {
-    imageName <- findMostRecentImageName(dockerConfig.imageNameSubstring)
-    containerId = startDockerContainer(imageName, s"dockerhost:$dockerHostIp", dockerConfig.portBindings)
+    imageName <- findMostRecentImageName(config.imageNameSubstring)
+    containerId = startDockerContainer(
+      imageName,
+      s"dockerhost:$dockerHostIp",
+      config.portBindings,
+      config.sharedFolders)
     attachedStream = attachContainer(containerId)
   } yield (containerId, attachedStream)
 
@@ -51,19 +58,27 @@ abstract class DockerTestService(val dockerConfig: DockerTestServiceConfig) exte
       sys.error("At least one docker image has to be published locally. Use sbt docker:publishLocal")
   }
 
-  private def startDockerContainer(imageName: String, extraHosts: String, ports: Map[Int, Int]): ContainerId = {
+  private def startDockerContainer(imageName: String,
+                                   extraHosts: String,
+                                   portBindings: Set[PortBindingConfig],
+                                   sharedFolders: Set[SharedFolderConfig]): ContainerId = {
+
     val containerId = docker.createContainerCmd(imageName)
-      .withExposedPorts(ports.keys.map(ExposedPort.tcp).toSeq: _*)
+      .withExposedPorts(portBindings.map(binding ⇒ ExposedPort.tcp(binding.internal)).toSeq: _*)
       .withExtraHosts(extraHosts)
       .withPortBindings {
-          val portBindings = new Ports()
-          ports.foreach(port ⇒ portBindings.bind(ExposedPort.tcp(port._1), Ports.Binding(port._2)))
-          portBindings
+        val bindings = new Ports()
+        portBindings.foreach { binding ⇒
+          bindings.bind(ExposedPort.tcp(binding.internal), Ports.Binding(binding.external))
+        }
+        bindings
       }
-      .withCmd(dockerConfig.commandLineArguments: _*)
-      .withBinds(new Bind(
-        new File(dockerConfig.shared.external).getAbsolutePath,
-        new Volume(dockerConfig.shared.internal)))
+      .withCmd(config.commandLineArguments: _*)
+      .withBinds(
+        sharedFolders.map { sharedFolderConfig ⇒
+          new Bind(makeAbsolutePath(sharedFolderConfig.external), new Volume(sharedFolderConfig.internal))
+        }.toSeq: _*
+      )
       .exec()
       .getId
 
@@ -74,6 +89,17 @@ abstract class DockerTestService(val dockerConfig: DockerTestServiceConfig) exte
     logger.info("Docker container {} started == {}", containerId, inspectContainerResponse.getState.isRunning)
 
     containerId
+  }
+
+  protected def makeAbsolutePath(absoluteOrRelativePath: String): String = {
+    if (new File(absoluteOrRelativePath).exists()) {
+      absoluteOrRelativePath
+    } else {
+      val maybeFile = Option(getClass.getResource(absoluteOrRelativePath)).map(_.getFile)
+      if (maybeFile.isEmpty)
+        sys.error(s"Failed to find absolute path for: $absoluteOrRelativePath")
+      maybeFile.get
+    }
   }
 
   private def getDockerHostIp: String = {
@@ -87,12 +113,6 @@ abstract class DockerTestService(val dockerConfig: DockerTestServiceConfig) exte
       dockerHostIp.get
     }
   }
-
-  private def getDockerApiUri(apiSocketPath: String, apiUrl: String): String =
-    if (new File(apiSocketPath).exists)
-      s"unix://$apiSocketPath"
-    else
-      apiUrl
 
   private def getNetworkInterfaceIp(networkInterfaceName: String): Option[String] = {
     import scala.collection.JavaConversions._

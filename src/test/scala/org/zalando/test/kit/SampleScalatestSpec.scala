@@ -1,7 +1,9 @@
 package org.zalando.test.kit
 
+import com.github.kxbmap.configs.syntax._
+import com.typesafe.config.ConfigFactory
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
-import org.zalando.test.kit.service.{DockerApiConfig, DockerTestServiceConfig, SharedDirectoryConfig}
+import org.zalando.test.kit.service.DockerTestServiceConfig
 
 import scala.io.Source
 import scalaj.http._
@@ -11,16 +13,9 @@ import scalaj.http._
   */
 class SampleScalatestSpec extends FeatureSpec with GivenWhenThen with MustMatchers with ScalatestServiceKit {
 
+  val config = ConfigFactory.load()
   val sampleRestService = new SampleRestService
-  val sampleDockerContainer = new SampleDockerContainer(new DockerTestServiceConfig(
-    imageNameSubstring = "gliderlabs/alpine", // minimalistic linux image
-    api = new DockerApiConfig("/var/run/docker.sock", "http://127.0.0.1:2375"),
-    portBindings = Map(80 → 8888),
-    shared = new SharedDirectoryConfig(
-      internal = "/www",
-      external = getClass.getResource("/shared_with_docker").getFile),
-    commandLineArguments = "busybox httpd -f -p 80 -h /www".split("\\s")
-  ))
+  val sampleDockerContainer = new SampleDockerContainer(config.get[DockerTestServiceConfig]("sample-docker-container"))
 
   override def testServices = List(sampleRestService, sampleDockerContainer)
 

@@ -51,7 +51,9 @@ pomExtra := (
 libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.14"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.3"
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6"
+libraryDependencies += "com.github.kxbmap" % "configs_2.11" % "0.3.0" % "test"
 libraryDependencies += "org.scalaj" %% "scalaj-http" % "2.2.1" % "test"
+libraryDependencies += "com.typesafe" % "config" % "1.3.0" % "test"
 
 lazy val providedDependencies = Seq(
   "org.mock-server" % "mockserver-netty" % "3.10.2",
