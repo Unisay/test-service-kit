@@ -1,6 +1,6 @@
 package org.zalando.test.kit
 
-import org.scalatest.{FlatSpec, GivenWhenThen, MustMatchers}
+import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
 import org.zalando.test.kit.service.{DockerApiConfig, DockerTestServiceConfig, SharedDirectoryConfig}
 
 import scalaj.http._
@@ -8,7 +8,7 @@ import scalaj.http._
 /**
   * Sample Scalatest spec to demonstrate usage of test services
   */
-class SampleScalatestSpec extends FlatSpec with GivenWhenThen with MustMatchers with ScalatestServiceKit {
+class SampleScalatestSpec extends FeatureSpec with GivenWhenThen with MustMatchers with ScalatestServiceKit {
 
   val sampleRestService = new SampleRestService
   val sampleDockerContainer = new SampleDockerContainer(
@@ -25,28 +25,29 @@ class SampleScalatestSpec extends FlatSpec with GivenWhenThen with MustMatchers 
 
   override def testServices = List(sampleRestService, sampleDockerContainer)
 
-  behavior of "Sample REST service"
+  feature("ScalatestServiceKit") {
 
-  it should "be started before and stopped after test suite" in {
-    Given("Sample REST service mock responds with 'healthy'")
-    sampleRestService.healthCheckRespondsWith("healthy")
+    scenario("Start all test services before and stop them after test suite") {
+      Given("Sample REST service mock responds with 'healthy'")
+      sampleRestService.healthCheckRespondsWith("healthy")
 
-    When("Actual request is made")
-    val response = Http(sampleRestService.healthCheckUrl).asString
+      When("Actual request is made")
+      val response = Http(sampleRestService.healthCheckUrl).asString
 
-    Then("Response contains data from mock")
-    response.is2xx mustBe true
-    response.body mustBe "healthy"
-  }
+      Then("Response contains data from mock")
+      response.is2xx mustBe true
+      response.body mustBe "healthy"
+    }
 
-  it should "reset all expectations before each test" in {
-    Given("Sample REST service mock has its expectations reset before each test")
+    scenario("Reset all expectations before each test") {
+      Given("Sample REST service mock has its expectations reset before each test")
 
-    When("Actual request is made")
-    val response = Http(sampleRestService.healthCheckUrl).asString
+      When("Actual request is made")
+      val response = Http(sampleRestService.healthCheckUrl).asString
 
-    Then("Response contains no data from previously set expectation")
-    response.is4xx mustBe true
+      Then("Response contains no data from previously set expectation")
+      response.is4xx mustBe true
+    }
   }
 
 }
