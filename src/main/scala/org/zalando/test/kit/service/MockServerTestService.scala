@@ -14,7 +14,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
-abstract class MockServerTestService(val mockServerPort: Int) extends TestService with AsyncAssertions {
+class MockServerTestService(override val name: String, val port: Int) extends TestService with AsyncAssertions {
 
   private val logger = LoggerFactory.getLogger(classOf[MockServerTestService])
 
@@ -39,7 +39,7 @@ abstract class MockServerTestService(val mockServerPort: Int) extends TestServic
 
   def start(): Unit = {
     logger.info("Starting {}", name)
-    maybeMockServer = Some(ClientAndServer.startClientAndServer(mockServerPort))
+    maybeMockServer = Some(ClientAndServer.startClientAndServer(port))
     logger.info("{} started", name)
   }
 
@@ -50,6 +50,8 @@ abstract class MockServerTestService(val mockServerPort: Int) extends TestServic
       logger.info("{} stopped", name)
     }
   }
+
+  val apiUrl = s"http://localhost:$port"
 
   def resetExpectations(): Unit = {
     expectations.clear()

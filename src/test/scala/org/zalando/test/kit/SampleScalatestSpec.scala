@@ -3,7 +3,7 @@ package org.zalando.test.kit
 import com.github.kxbmap.configs.syntax._
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
-import org.zalando.test.kit.service.DockerTestServiceConfig
+import org.zalando.test.kit.service.{DockerContainerConfig, DockerContainerTestService, MockServerTestService}
 
 import scala.io.Source
 import scalaj.http._
@@ -14,8 +14,8 @@ import scalaj.http._
 class SampleScalatestSpec extends FeatureSpec with GivenWhenThen with MustMatchers with ScalatestServiceKit {
 
   val config = ConfigFactory.load()
-  val sampleRestService = new SampleRestService
-  val sampleDockerContainer = new SampleDockerContainer(config.get[DockerTestServiceConfig]("sample-docker-container"))
+  val sampleRestService = new MockServerTestService("Sample REST service mock", 8080) with SampleResponses
+  val sampleDockerContainer = new DockerContainerTestService(config.get[DockerContainerConfig]("sample-docker-container"))
 
   override def testServices = List(sampleRestService, sampleDockerContainer)
 
@@ -26,7 +26,7 @@ class SampleScalatestSpec extends FeatureSpec with GivenWhenThen with MustMatche
       sampleRestService.healthCheckRespondsWith("healthy")
 
       When("Actual request is made")
-      val response = Http(sampleRestService.healthCheckUrl).asString
+      val response = Http(s"${sampleRestService.apiUrl}/health").asString
 
       Then("Response contains data from mock")
       response.is2xx mustBe true
@@ -37,7 +37,7 @@ class SampleScalatestSpec extends FeatureSpec with GivenWhenThen with MustMatche
       Given("Sample REST service mock has its expectations reset before each test")
 
       When("Actual request is made")
-      val response = Http(sampleRestService.healthCheckUrl).asString
+      val response = Http(s"${sampleRestService.apiUrl}/health").asString
 
       Then("Response contains no data from previously set expectation")
       response.is4xx mustBe true
@@ -49,9 +49,11 @@ class SampleScalatestSpec extends FeatureSpec with GivenWhenThen with MustMatche
 
     scenario("Start sample docker container before and stop it after test suite") {
       Given("Sample docker container exposes resource via HTTP")
+      val port = sampleDockerContainer.portBindings.head.external
+      val resourceUrl = s"http://localhost:$port/resource.htm"
 
       When("Request to the exposed resource is made")
-      val response = Http(sampleDockerContainer.sampleResourceUrl).asString
+      val response = Http(resourceUrl).asString
 
       Then("Successful response contains data from shared folder")
       response.is2xx mustBe true

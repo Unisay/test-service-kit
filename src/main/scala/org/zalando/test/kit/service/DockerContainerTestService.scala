@@ -8,8 +8,10 @@ import com.github.dockerjava.api.model._
 import com.github.dockerjava.core.command.AttachContainerResultCallback
 import com.github.dockerjava.core.{DockerClientBuilder, DockerClientConfig}
 import org.slf4j.LoggerFactory
+import org.zalando.test.kit.service.DockerContainerTestService.immediatelyReady
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.{Await, Future}
 import scala.sys.process.Process
 import scala.util.Try
 
@@ -19,35 +21,49 @@ case class PortBindingConfig(internal: Int, external: Int)
 
 case class SharedFolderConfig(internal: String, external: String)
 
-case class DockerTestServiceConfig(imageNameSubstring: String,
-                                   apiUri: String,
-                                   portBindings: Set[PortBindingConfig] = Set.empty,
-                                   sharedFolders: Set[SharedFolderConfig] = Set.empty,
-                                   commandLineArguments: Seq[String] = Seq.empty)
+case class DockerContainerConfig(imageNameSubstring: String,
+                                 apiUri: String,
+                                 serviceName: Option[String] = None,
+                                 portBindings: Set[PortBindingConfig] = Set.empty,
+                                 sharedFolders: Set[SharedFolderConfig] = Set.empty,
+                                 commandLineArguments: Seq[String] = Seq.empty)
 
-abstract class DockerTestService(val config: DockerTestServiceConfig) extends TestService {
+object DockerContainerTestService {
+  implicit val immediatelyReady: (DockerContainerTestService) ⇒ Future[Unit] = _ ⇒ Future.successful()
+}
+
+class DockerContainerTestService(override val name: String,
+                                 val imageNameSubstring: String,
+                                 val apiUri: String,
+                                 val portBindings: Set[PortBindingConfig] = Set.empty,
+                                 val sharedFolders: Set[SharedFolderConfig] = Set.empty,
+                                 val commandLineArguments: Seq[String] = Seq.empty)
+                                (implicit val readinessChecker: (DockerContainerTestService) ⇒ Future[Unit] = immediatelyReady)
+  extends TestService {
+
+  def this(config: DockerContainerConfig) = this(
+    config.serviceName.getOrElse(s"Docker container ${config.imageNameSubstring}"),
+    config.imageNameSubstring,
+    config.apiUri,
+    config.portBindings,
+    config.sharedFolders,
+    config.commandLineArguments)
 
   type ContainerId = String
 
-  private val logger = LoggerFactory.getLogger(classOf[DockerTestService])
+  private val logger = LoggerFactory.getLogger(classOf[DockerContainerTestService])
 
   private lazy val dockerClientConfig = DockerClientConfig.createDefaultConfigBuilder()
-    .withUri(if (new File(config.apiUri).exists) s"unix://${config.apiUri}" else config.apiUri)
+    .withUri(if (new File(apiUri).exists) s"unix://$apiUri" else apiUri)
     .build()
 
   private lazy val docker = DockerClientBuilder.getInstance(dockerClientConfig).build()
 
   protected val dockerHostIp = getDockerHostIp
 
-  protected def awaitContainer(): Unit
-
   private lazy val container: Option[(ContainerId, ResultCallback[Frame])] = for {
-    imageName <- findMostRecentImageName(config.imageNameSubstring)
-    containerId = startDockerContainer(
-      imageName,
-      s"dockerhost:$dockerHostIp",
-      config.portBindings,
-      config.sharedFolders)
+    imageName <- findMostRecentImageName(imageNameSubstring)
+    containerId = startDockerContainer(imageName, s"dockerhost:$dockerHostIp", portBindings, sharedFolders)
     attachedStream = attachContainer(containerId)
   } yield (containerId, attachedStream)
 
@@ -73,7 +89,7 @@ abstract class DockerTestService(val config: DockerTestServiceConfig) extends Te
         }
         bindings
       }
-      .withCmd(config.commandLineArguments: _*)
+      .withCmd(commandLineArguments: _*)
       .withBinds(
         sharedFolders.map { sharedFolderConfig ⇒
           new Bind(makeAbsolutePath(sharedFolderConfig.external), new Volume(sharedFolderConfig.internal))
@@ -143,7 +159,7 @@ abstract class DockerTestService(val config: DockerTestServiceConfig) extends Te
       .withLogs()
       .exec(callback)
 
-    awaitContainer()
+    Await.ready(readinessChecker(this), Duration.Inf)
     resultCallback
   }
 
