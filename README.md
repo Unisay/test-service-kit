@@ -50,7 +50,9 @@ libraryDependencies += "org.zalando" %% "test-service-kit" % "4.0.0"
 or use one of the already implemented test services:
 
   * [MockServerTestService](/src/main/scala/org/zalando/test/kit/service/MockServerTestService.scala) to run [MockServer](http://www.mock-server.com) instance.
+    For example usage see [MockServerTestServiceSpec](/src/test/scala/org/zalando/test/kit/MockServerTestServiceSpec.scala)
   * [DockerContainerTestService](/src/main/scala/org/zalando/test/kit/service/DockerContainerTestService.scala) to run any [Docker](https://www.docker.com/) container.
+    For example usage see [DockerContainerTestServiceSpec](/src/test/scala/org/zalando/test/kit/DockerContainerTestServiceSpec.scala)
   * [DatabaseTestService](/src/main/scala/org/zalando/test/kit/service/DatabaseTestService.scala) to run embedded PostgreSQL server.
 
 2. Mixin trait to your spec
@@ -74,9 +76,10 @@ or use one of the already implemented test services:
   }
   ```
 
-Legend:
-* `a || b` (alias `a inParallelWith b`) means test services `a` and `b` are started/stopped concurrently.
-* `a >> b` (alias `a andThen b`) means test services are started one after another (`a` then `b`) and stopped in reverse order (`b` then `a`).
+  Legend:
+  * `a || b` (alias `a inParallelWith b`) means test services `a` and `b` are started/stopped concurrently.
+  * `a >> b` (alias `a andThen b`) means test services are started one after another (`a` then `b`) and stopped in reverse order (`b` then `a`).
+  * For detailed example of composition see: [TestServiceCompositionSpec](/src/test/scala/org/zalando/test/kit/TestServiceCompositionSpec.scala)
 
 ## License
 
