@@ -14,7 +14,7 @@ import org.zalando.test.kit.service.DockerContainerTestService.ready
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 case class HealthCheckConfig(url: String, timeout: FiniteDuration)
 
@@ -52,29 +52,29 @@ class DockerContainerTestService(override val name: String,
 
   type ContainerId = String
 
-  private lazy val dockerClientConfig = DockerClientConfig.createDefaultConfigBuilder()
-    .withUri(if (new File(apiUri).exists) s"unix://$apiUri" else apiUri)
-    .build()
-
-  private var state: Option[(DockerClient, ContainerId, ResultCallback[Frame])] = None
+  private var state: Try[(DockerClient, ContainerId, ResultCallback[Frame])] =
+    Failure(new RuntimeException("not initialized"))
 
   override def start(): Unit = {
     state = for {
-      client ← Option(DockerClientBuilder.getInstance(dockerClientConfig).build())
+      client ← createDockerClient
       imageName <- findMostRecentImageName(client, imageNameSubstring)
-      containerId = startDockerContainer(client, imageName, s"dockerhost:$dockerHostIp", portBindings, sharedFolders)
-      attachedStream = attachContainer(client, containerId)
+      containerId ← startDockerContainer(client, imageName, s"dockerhost:$dockerHostIp", portBindings, sharedFolders)
+      attachedStream ← attachContainer(client, containerId)
     } yield (client, containerId, attachedStream)
 
-    if (state.isEmpty)
-      throw new TestServiceException(s"At least one docker image ($imageNameSubstring) has to be published locally")
+    state.failed.foreach(throw _)
+  }
+
+  private def createDockerClient: Try[DockerClient] = Try {
+    DockerClientBuilder.getInstance(DockerClientConfig.createDefaultConfigBuilder().withUri(apiUri).build()).build()
   }
 
   private def startDockerContainer(client: DockerClient,
                                    imageName: String,
                                    extraHosts: String,
                                    portBindings: Set[PortBindingConfig],
-                                   sharedFolders: Set[SharedFolderConfig]): ContainerId = {
+                                   sharedFolders: Set[SharedFolderConfig]): Try[ContainerId] = Try {
 
     val containerId = client.createContainerCmd(imageName)
       .withExposedPorts(portBindings.map(binding ⇒ ExposedPort.tcp(binding.internal)).toSeq: _*)
@@ -137,7 +137,7 @@ class DockerContainerTestService(override val name: String,
       .headOption
   }
 
-  private def attachContainer(client: DockerClient, containerId: ContainerId): ResultCallback[Frame] = {
+  private def attachContainer(client: DockerClient, containerId: ContainerId): Try[ResultCallback[Frame]] = Try {
     val callback = new AttachContainerResultCallback {
       override def onNext(frame: Frame): Unit = {
         logger.info("\n> {}", new String(frame.getPayload).trim)
@@ -159,7 +159,7 @@ class DockerContainerTestService(override val name: String,
     resultCallback
   }
 
-  private def findMostRecentImageName(client: DockerClient, substring: String): Option[String] = {
+  private def findMostRecentImageName(client: DockerClient, substring: String): Try[String] = {
     import scala.collection.JavaConversions._
     client
       .listImagesCmd()
@@ -169,7 +169,13 @@ class DockerContainerTestService(override val name: String,
       .filter(_.getRepoTags.head.contains(substring))
       .sortWith((image1, image2) ⇒ image1.getCreated.compareTo(image2.getCreated) > 0)
       .flatMap(_.getRepoTags)
-      .headOption
+      .headOption match {
+      case Some(string) ⇒
+        Success(string)
+      case None ⇒
+        Failure(throw new TestServiceException(
+          s"At least one docker image ($imageNameSubstring) has to be published locally"))
+    }
   }
 
   override def stop(): Unit = state foreach {
