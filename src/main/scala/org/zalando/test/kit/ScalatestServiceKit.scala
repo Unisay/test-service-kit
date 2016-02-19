@@ -2,7 +2,7 @@ package org.zalando.test.kit
 
 import org.scalatest._
 
-import scala.util.Try
+import scala.util.{Success, Try}
 
 trait ScalatestServiceKit extends BeforeAndAfterAll with TestServiceKit {
   this: Suite ⇒
@@ -17,9 +17,15 @@ trait ScalatestServiceKit extends BeforeAndAfterAll with TestServiceKit {
         outcome
       case None ⇒
         beforeTest()
-        val outcome = super.withFixture(test)
-        afterTest()
-        outcome
+        val testOutcome = super.withFixture(test)
+        val afterOutcome = Try(afterTest()).transform(
+          _ ⇒ Success[Outcome](Succeeded),
+          t ⇒ Success[Outcome](Failed(t))
+        ).get
+        if (testOutcome.isSucceeded && afterOutcome.isFailed)
+          afterOutcome
+        else
+          testOutcome
     }
 
   override protected def beforeAll(): Unit = {
@@ -32,5 +38,4 @@ trait ScalatestServiceKit extends BeforeAndAfterAll with TestServiceKit {
   }
 
   override protected def afterAll(): Unit = afterSuite()
-
 }

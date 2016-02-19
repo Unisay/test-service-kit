@@ -10,7 +10,7 @@ trait SampleResponses {
 
   def healthCheckRespondsWith(body: String): Unit =
     mockServer
-      .when(request.withPath("/health"))
+      .when(verify(request.withPath("/health")))
       .respond(response.withBody(body))
 
 }
