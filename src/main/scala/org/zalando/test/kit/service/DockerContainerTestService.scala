@@ -7,7 +7,8 @@ import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model._
 import com.github.dockerjava.core.command.AttachContainerResultCallback
 import com.github.dockerjava.core.{DockerClientBuilder, DockerClientConfig}
-import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.StrictLogging
+import org.zalando.test.kit.TestServiceException
 import org.zalando.test.kit.service.DockerContainerTestService.ready
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -39,7 +40,7 @@ class DockerContainerTestService(override val name: String,
                                  val sharedFolders: Set[SharedFolderConfig] = Set.empty,
                                  val commandLineArguments: Seq[String] = Seq.empty)
                                 (implicit val readinessChecker: (DockerContainerTestService) ⇒ Future[Unit] = ready)
-  extends TestService {
+  extends TestService with SuiteLifecycle with StrictLogging {
 
   def this(config: DockerContainerConfig) = this(
     config.serviceName.getOrElse(s"Docker container ${config.imageNameSubstring}"),
@@ -51,15 +52,11 @@ class DockerContainerTestService(override val name: String,
 
   type ContainerId = String
 
-  private val logger = LoggerFactory.getLogger(classOf[DockerContainerTestService])
-
   private lazy val dockerClientConfig = DockerClientConfig.createDefaultConfigBuilder()
     .withUri(if (new File(apiUri).exists) s"unix://$apiUri" else apiUri)
     .build()
 
   private lazy val docker = DockerClientBuilder.getInstance(dockerClientConfig).build()
-
-  protected val dockerHostIp = getDockerHostIp
 
   private lazy val container: Option[(ContainerId, ResultCallback[Frame])] = for {
     imageName <- findMostRecentImageName(imageNameSubstring)
@@ -69,9 +66,9 @@ class DockerContainerTestService(override val name: String,
 
   var shutdownProcess: Option[Process] = None
 
-  override def beforeSuite(): Unit = {
+  override def start(): Unit = {
     if (container.isEmpty)
-      sys.error("At least one docker image has to be published locally. Use sbt docker:publishLocal")
+      throw new TestServiceException(s"At least one docker image ($imageNameSubstring) has to be published locally")
   }
 
   private def startDockerContainer(imageName: String,
@@ -98,11 +95,11 @@ class DockerContainerTestService(override val name: String,
       .exec()
       .getId
 
+    logger.info(s"Starting docker container: $imageName")
     docker.startContainerCmd(containerId).exec()
-    logger.info("Starting docker container: {}", imageName)
 
-    val inspectContainerResponse = docker.inspectContainerCmd(containerId).exec()
-    logger.info("Docker container {} started == {}", containerId, inspectContainerResponse.getState.isRunning)
+    assert(docker.inspectContainerCmd(containerId).exec().getState.isRunning)
+    logger.info(s"Docker container $containerId started")
 
     containerId
   }
@@ -113,24 +110,23 @@ class DockerContainerTestService(override val name: String,
     } else {
       val maybeFile = Option(getClass.getResource(absoluteOrRelativePath)).map(_.getFile)
       if (maybeFile.isEmpty)
-        sys.error(s"Failed to find absolute path for: $absoluteOrRelativePath")
+        throw new TestServiceException(s"Failed to find absolute path for: $absoluteOrRelativePath")
       maybeFile.get
     }
   }
 
-  private def getDockerHostIp: String = {
-    val dockerHostIp = getNetworkInterfaceIp("docker0")
-      .orElse(getNetworkInterfaceIp("vboxnet0"))
-      .orElse(getNetworkInterfaceIp("vboxnet1"))
-    if (dockerHostIp.isEmpty)
-      sys.error("Failed to determine docker host IP by searching for a docker0, vboxnet0 or vboxnet1 network interface")
-    else {
-      logger.info("Detected docker host IP: {}", dockerHostIp.get)
-      dockerHostIp.get
+  private def dockerHostIp: String =
+    interfaceIp("docker0").orElse(interfaceIp("vboxnet0")).orElse(interfaceIp("vboxnet1")) match {
+      case Some(ip) ⇒
+        logger.info(
+          s"Detected docker host IP ($ip). It will be reachable from inside the container by domain name 'dockerhost'")
+        ip
+      case _ ⇒
+        throw new TestServiceException(
+          "Failed to determine docker host IP by searching for a docker0, vboxnet0 or vboxnet1 network interface")
     }
-  }
 
-  private def getNetworkInterfaceIp(networkInterfaceName: String): Option[String] = {
+  private def interfaceIp(networkInterfaceName: String): Option[String] = {
     import scala.collection.JavaConversions._
     NetworkInterface
       .getNetworkInterfaces.toList
@@ -176,17 +172,17 @@ class DockerContainerTestService(override val name: String,
       .headOption
   }
 
-  override def afterSuite(): Unit = {
+  override def stop(): Unit = {
     container.foreach { containerInfo ⇒
       val (id, attached) = containerInfo
       Try(attached.close())
       if (docker.inspectContainerCmd(id).exec().getState.isRunning) {
-        logger.info("Stopping docker container: {}", id)
+        logger.info(s"Stopping docker container: $id")
         docker.stopContainerCmd(id).exec()
         docker.waitContainerCmd(id).exec() // blocks until container is stopped
-        logger.info("Docker container {} stopped", id)
+        logger.info(s"Docker container $id stopped")
       } else {
-        logger.info("Container {} is not running", id)
+        logger.info(s"Container $id is not running")
       }
     }
   }

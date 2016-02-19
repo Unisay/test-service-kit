@@ -2,22 +2,20 @@ package org.zalando.test.kit.service
 
 import java.util.concurrent.TimeUnit
 
+import com.typesafe.scalalogging.StrictLogging
 import org.mockserver.client.server.MockServerClient
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.model.{HttpRequest, HttpResponse}
 import org.mockserver.verify.VerificationTimes
 import org.mockserver.verify.VerificationTimes._
 import org.scalatest.concurrent.AsyncAssertions
-import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
 class MockServerTestService(override val name: String, val port: Int, val host: String = "localhost")
-  extends TestService with AsyncAssertions {
-
-  private val logger = LoggerFactory.getLogger(classOf[MockServerTestService])
+  extends TestService with SuiteLifecycle with AsyncAssertions with StrictLogging {
 
   implicit protected var maybeMockServer: Option[MockServerClient] = None
 
@@ -30,21 +28,17 @@ class MockServerTestService(override val name: String, val port: Int, val host: 
       throw new IllegalStateException("MockServer is not initialized. Ensure beforeAll() is invoked in your test")
   }
 
-  override def beforeSuite(): Unit = start()
-
   override def beforeTest(): Unit = resetExpectations()
 
   override def afterTest(): Unit = verifyExpectations()
 
-  override def afterSuite(): Unit = stop()
-
-  def start(): Unit = {
+  override def start(): Unit = {
     logger.info("Starting {}", name)
     maybeMockServer = Some(ClientAndServer.startClientAndServer(port))
     logger.info("{} started", name)
   }
 
-  def stop(): Unit = {
+  override def stop(): Unit = {
     maybeMockServer.foreach { mockServer =>
       logger.info("Stopping {}", name)
       mockServer.stop()

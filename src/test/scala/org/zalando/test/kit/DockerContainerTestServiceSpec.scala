@@ -19,9 +19,9 @@ class DockerContainerTestServiceSpec extends FeatureSpec with GivenWhenThen with
   val container2 = new DockerContainerTestService(config.get[DockerContainerConfig]("sample-container-2"))
 
   override def testServices = container1 inParallelWith container2
+  override val cancelSuiteOnTestServiceException = true
 
-  // Ignored as travis-ci doesn't run docker
-  ignore("Start sample docker container before and stop it after test suite") {
+  scenario("Start sample docker container before and stop it after test suite") {
 
     Given("Sample docker containers expose resource via HTTP")
     val resourceUrl1 = s"http://localhost:${container1.portBindings.head.external}/resource.htm"

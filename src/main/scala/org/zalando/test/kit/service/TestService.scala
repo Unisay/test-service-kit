@@ -4,6 +4,14 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.implicitConversions
 
+trait TestService {
+  def name: String
+  def beforeSuite(): Unit = {}
+  def beforeTest(): Unit = {}
+  def afterTest(): Unit = {}
+  def afterSuite(): Unit = {}
+}
+
 object TestService {
 
   sealed trait Composition {
@@ -24,7 +32,7 @@ object TestService {
       val leftVisit = Future(left.visitInOrder(visitor))
       val rightVisit = Future(right.visitInOrder(visitor))
       val both = Future.sequence(Set(leftVisit, rightVisit))
-      Await.ready(both, Duration.Inf)
+      Await.result(both, Duration.Inf)
     }
   }
 
@@ -38,19 +46,5 @@ object TestService {
       left.visitInReverseOrder(visitor)
     }
   }
-
-}
-
-trait TestService {
-
-  def name: String
-
-  def beforeSuite(): Unit = {}
-
-  def beforeTest(): Unit = {}
-
-  def afterTest(): Unit = {}
-
-  def afterSuite(): Unit = {}
 
 }
