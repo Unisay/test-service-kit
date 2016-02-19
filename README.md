@@ -5,16 +5,51 @@ Test Service Kit
 
 Scala framework that manages external services for tests (mock HTTP services, docker containers, databases, etc.)
 
-## Usage
+Central concept of the framework is a `TestService`:
+
+```scala
+trait TestService {
+  def name: String
+  def beforeSuite(): Unit = {}
+  def beforeTest(): Unit = {}
+  def afterTest(): Unit = {}
+  def afterSuite(): Unit = {}
+}
+```
+
+It represents some process (OS process, JVM thread) that is run in concurrently and separately from the test [suite] and provides useful function for it (inspired by [JUnits Rules] (https://github.com/junit-team/junit/wiki/Rules#externalresource-rules)) Some examples are: database, mock rest service, docker container, etc. 
+
+Test Service Kit manages lifecycle of `TestService`s using calling following lifecycle methods:
+```scala
+def beforeSuite(): Unit
+def beforeTest(): Unit
+def afterTest(): Unit
+def afterSuite(): Unit
+```
+Specific test service could be bound to test suite lifecycle only by mixing [SuiteLifecycle](/src/main/scala/org/zalando/test/kit/service/SuiteLifecycle.scala) trait, in this case it must implement 
+```scala
+def start(): Unit // called before suite
+def stop(): Unit // called after suite
+```
+
+or to test lifecycle only by mixing [TestLifecycle](/src/main/scala/org/zalando/test/kit/service/SuiteLifecycle.scala) trait, 
+, in this case it must implement 
+```scala
+def start(): Unit // called before each test
+def stop(): Unit // called after each test
+```
+
+## Installation
 ### Add the test-service-kit dependency to your project
 
 ```scala
-libraryDependencies += "org.zalando" %% "test-service-kit" % "0.3.4"
+libraryDependencies += "org.zalando" %% "test-service-kit" % "4.0.0"
 ```
 
+## Usage
 ### Implement application-specific test services by extending base services:
 
-Currently there are 3 base services available:
+Currently there are 3 test services available:
 
 #### MockServer (www.mock-server.com)
 ... represents Mock-Server instance.
