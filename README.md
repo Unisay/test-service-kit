@@ -17,9 +17,9 @@ trait TestService {
 }
 ```
 
-It represents some process (OS process, JVM thread) that is run in concurrently and separately from the test [suite] and provides useful function for it (inspired by [JUnits Rules] (https://github.com/junit-team/junit/wiki/Rules#externalresource-rules)) Some examples are: database, mock rest service, docker container, etc. 
+It represents some process (OS process, JVM thread) that is run concurrently and separately from the test [suite] and provides useful function for it (inspired by [JUnits Rules] (https://github.com/junit-team/junit/wiki/Rules#externalresource-rules)) Some examples are: database, mock rest service, docker container, etc. 
 
-Test Service Kit manages lifecycle of `TestService`s using calling following lifecycle methods:
+Test Service Kit manages lifecycle of `TestService`s by calling following lifecycle methods:
 ```scala
 def beforeSuite(): Unit
 def beforeTest(): Unit
