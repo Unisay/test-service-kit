@@ -5,7 +5,7 @@ Test Service Kit
 
 Scala framework that manages external services for tests (mock HTTP services, docker containers, databases, etc.)
 
-Central concept of the framework is a `TestService`:
+Central concept of the framework is a [TestService](/src/main/scala/org/zalando/test/kit/service/TestService.scala):
 
 ```scala
 trait TestService {
@@ -40,65 +40,44 @@ def stop(): Unit // called after each test
 ```
 
 ## Installation
-### Add the test-service-kit dependency to your project
-
+Add the test-service-kit dependency to your SBT project
 ```scala
 libraryDependencies += "org.zalando" %% "test-service-kit" % "4.0.0"
 ```
 
 ## Usage
-### Implement application-specific test services by extending base services:
 
-Currently there are 3 test services available:
+1. Implement your own test service by extending [TestService](/src/main/scala/org/zalando/test/kit/service/TestService.scala)
+or use one of the already implemented test services:
 
-#### MockServer (www.mock-server.com)
-... represents Mock-Server instance.
+  * [MockServerTestService](/src/main/scala/org/zalando/test/kit/service/MockServerTestService.scala) to run [MockServer](http://www.mock-server.com) instance.
+  * [DockerContainerTestService](/src/main/scala/org/zalando/test/kit/service/DockerContainerTestService.scala) to run any [Docker](https://www.docker.com/) container.
+  * [DatabaseTestService](/src/main/scala/org/zalando/test/kit/service/DatabaseTestService.scala) to run embedded PostgreSQL server.
 
-```scala
-class MyOauthTestService extends MockServerTestService {
-   // implement required methods here
-}
-```
-See [MockServerTestService](/src/main/scala/org/zalando/test/kit/service/MockServerTestService.scala) 
+2. Mixin trait to your spec
+  * For [ScalaTest](http://scalatest.org/): [ScalatestServiceKit](/src/main/scala/org/zalando/test/kit/ScalatestServiceKit.scala)
+  * For [Specs2](https://etorreborre.github.io/specs2/): Not implemented, pull requests are welcome.
 
-#### Docker Container
-... represents Docker container.
-
-```scala
-class MyDockerContainerTestService extends DockerTestService {
-   // implement required methods here
-}
-```
-See [DockerTestService](/src/main/scala/org/zalando/test/kit/service/DockerTestService.scala)
-
-#### DatabaseTestService (Embedded PostgreSQL)
-See [DatabaseTestService](/src/main/scala/org/zalando/test/kit/service/DatabaseTestService.scala)
-
-### Mixin trait
-Add ScalatestServiceKit trait to your tests:
-
-For ScalaTest:
-```scala
-case MyCoolSpec extends FlatSpec with ScalatestServiceKit { ... }
-```
-
-For specs2: 
-```
-Not implemented yet, pull requests are welcome.
-```
-
-### Define services used by test
+3. Define services used by your spec
 ```scala
 case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
-  val databaseTestService = new DatabaseTestService(databaseConfig) // May be used directly, without extending it
-  val oauthTestService = new MyOauthTestService(webServiceConfig) // Specific to your application
-  val dockerContainer = new MyDockerContainerTestService(dockerContainerConfig) // Specific to your application
-  override def testServices: List[TestService] = List(databaseTestService, oauthTestService)
+  val oauthApi = new MockServerTestService("Mocked REST API", 8080) 
+  val database = new DatabaseTestService(config.get[DatabaseTestServiceconfig]("database")) 
+  val container = new DockerContainerTestService(config.get[DockerContainerConfig]("docker-container"))
 }
-
 ```
 
-After that lifecycle of each test service will be attached to the test lifecycle: they are started/reset/stopped by your testing framework (Scalatest, Specs2, ...). 
+4. Define order in which test services are started/stopped:
+```scala
+case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
+  ...
+  override def testServices = (oauthApi || database) >> container
+}
+```
+
+Legend:
+* `a || b` (alias `a inParallelWith b`) means test services `a` and `b` are started/stopped concurrently.
+* `a >> b` (alias `a andThen b`) means test services are started one after another (`a` then `b`) and stopped in reverse order (`b` then `a`).
 
 ## License
 
