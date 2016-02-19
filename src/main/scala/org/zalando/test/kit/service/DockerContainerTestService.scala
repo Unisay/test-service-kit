@@ -3,6 +3,7 @@ package org.zalando.test.kit.service
 import java.io.File
 import java.net.{Inet4Address, NetworkInterface}
 
+import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model._
 import com.github.dockerjava.core.command.AttachContainerResultCallback
@@ -13,7 +14,6 @@ import org.zalando.test.kit.service.DockerContainerTestService.ready
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
-import scala.sys.process.Process
 import scala.util.Try
 
 case class HealthCheckConfig(url: String, timeout: FiniteDuration)
@@ -56,27 +56,27 @@ class DockerContainerTestService(override val name: String,
     .withUri(if (new File(apiUri).exists) s"unix://$apiUri" else apiUri)
     .build()
 
-  private lazy val docker = DockerClientBuilder.getInstance(dockerClientConfig).build()
-
-  private lazy val container: Option[(ContainerId, ResultCallback[Frame])] = for {
-    imageName <- findMostRecentImageName(imageNameSubstring)
-    containerId = startDockerContainer(imageName, s"dockerhost:$dockerHostIp", portBindings, sharedFolders)
-    attachedStream = attachContainer(containerId)
-  } yield (containerId, attachedStream)
-
-  var shutdownProcess: Option[Process] = None
+  private var state: Option[(DockerClient, ContainerId, ResultCallback[Frame])] = None
 
   override def start(): Unit = {
-    if (container.isEmpty)
+    state = for {
+      client ← Option(DockerClientBuilder.getInstance(dockerClientConfig).build())
+      imageName <- findMostRecentImageName(client, imageNameSubstring)
+      containerId = startDockerContainer(client, imageName, s"dockerhost:$dockerHostIp", portBindings, sharedFolders)
+      attachedStream = attachContainer(client, containerId)
+    } yield (client, containerId, attachedStream)
+
+    if (state.isEmpty)
       throw new TestServiceException(s"At least one docker image ($imageNameSubstring) has to be published locally")
   }
 
-  private def startDockerContainer(imageName: String,
+  private def startDockerContainer(client: DockerClient,
+                                   imageName: String,
                                    extraHosts: String,
                                    portBindings: Set[PortBindingConfig],
                                    sharedFolders: Set[SharedFolderConfig]): ContainerId = {
 
-    val containerId = docker.createContainerCmd(imageName)
+    val containerId = client.createContainerCmd(imageName)
       .withExposedPorts(portBindings.map(binding ⇒ ExposedPort.tcp(binding.internal)).toSeq: _*)
       .withExtraHosts(extraHosts)
       .withPortBindings {
@@ -96,9 +96,9 @@ class DockerContainerTestService(override val name: String,
       .getId
 
     logger.info(s"Starting docker container: $imageName")
-    docker.startContainerCmd(containerId).exec()
+    client.startContainerCmd(containerId).exec()
 
-    assert(docker.inspectContainerCmd(containerId).exec().getState.isRunning)
+    assert(client.inspectContainerCmd(containerId).exec().getState.isRunning)
     logger.info(s"Docker container $containerId started")
 
     containerId
@@ -137,7 +137,7 @@ class DockerContainerTestService(override val name: String,
       .headOption
   }
 
-  private def attachContainer(containerId: ContainerId): ResultCallback[Frame] = {
+  private def attachContainer(client: DockerClient, containerId: ContainerId): ResultCallback[Frame] = {
     val callback = new AttachContainerResultCallback {
       override def onNext(frame: Frame): Unit = {
         logger.info("\n> {}", new String(frame.getPayload).trim)
@@ -148,7 +148,7 @@ class DockerContainerTestService(override val name: String,
       }
     }
 
-    val resultCallback = docker.attachContainerCmd(containerId)
+    val resultCallback = client.attachContainerCmd(containerId)
       .withStdErr()
       .withStdOut()
       .withFollowStream()
@@ -159,9 +159,9 @@ class DockerContainerTestService(override val name: String,
     resultCallback
   }
 
-  private def findMostRecentImageName(substring: String): Option[String] = {
+  private def findMostRecentImageName(client: DockerClient, substring: String): Option[String] = {
     import scala.collection.JavaConversions._
-    docker
+    client
       .listImagesCmd()
       .exec()
       .iterator()
@@ -172,19 +172,18 @@ class DockerContainerTestService(override val name: String,
       .headOption
   }
 
-  override def stop(): Unit = {
-    container.foreach { containerInfo ⇒
-      val (id, attached) = containerInfo
+  override def stop(): Unit = state foreach {
+    case (client, id, attached) ⇒
       Try(attached.close())
-      if (docker.inspectContainerCmd(id).exec().getState.isRunning) {
+      if (client.inspectContainerCmd(id).exec().getState.isRunning) {
         logger.info(s"Stopping docker container: $id")
-        docker.stopContainerCmd(id).exec()
-        docker.waitContainerCmd(id).exec() // blocks until container is stopped
+        client.stopContainerCmd(id).exec()
+        client.waitContainerCmd(id).exec() // blocks until container is stopped
         logger.info(s"Docker container $id stopped")
       } else {
         logger.info(s"Container $id is not running")
       }
-    }
   }
+
 
 }
