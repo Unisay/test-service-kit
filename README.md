@@ -57,22 +57,22 @@ or use one of the already implemented test services:
   * For [ScalaTest](http://scalatest.org/): [ScalatestServiceKit](/src/main/scala/org/zalando/test/kit/ScalatestServiceKit.scala)
   * For [Specs2](https://etorreborre.github.io/specs2/): Not implemented, pull requests are welcome.
 
-3. Define services used by your spec
-```scala
-case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
-  val oauthApi = new MockServerTestService("Mocked REST API", 8080) 
-  val database = new DatabaseTestService(config.get[DatabaseTestServiceconfig]("database")) 
-  val container = new DockerContainerTestService(config.get[DockerContainerConfig]("docker-container"))
-}
-```
-
+3. Define services used by your spec:
+  ```scala
+  case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
+    val oauthApi = new MockServerTestService("Mocked REST API", 8080) 
+    val database = new DatabaseTestService(config.get[DatabaseTestServiceconfig]("database")) 
+    val container = new DockerContainerTestService(config.get[DockerContainerConfig]("docker-container"))
+  }
+  ```
+  
 4. Define order in which test services are started/stopped:
-```scala
-case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
-  ...
-  override def testServices = (oauthApi || database) >> container
-}
-```
+  ```scala
+  case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
+    ...
+    override def testServices = (oauthApi || database) >> container
+  }
+  ```
 
 Legend:
 * `a || b` (alias `a inParallelWith b`) means test services `a` and `b` are started/stopped concurrently.
