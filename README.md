@@ -32,8 +32,7 @@ def start(): Unit // called before suite
 def stop(): Unit // called after suite
 ```
 
-or to test lifecycle only by mixing [TestLifecycle](/src/main/scala/org/zalando/test/kit/service/SuiteLifecycle.scala) trait, 
-, in this case it must implement 
+or to test lifecycle only by mixing [TestLifecycle](/src/main/scala/org/zalando/test/kit/service/SuiteLifecycle.scala) trait, in which case it must implement 
 ```scala
 def start(): Unit // called before each test
 def stop(): Unit // called after each test
