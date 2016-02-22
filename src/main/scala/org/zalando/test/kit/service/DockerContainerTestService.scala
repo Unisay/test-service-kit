@@ -10,7 +10,6 @@ import com.github.dockerjava.core.command.AttachContainerResultCallback
 import com.github.dockerjava.core.{DockerClientBuilder, DockerClientConfig}
 import com.typesafe.scalalogging.StrictLogging
 import org.zalando.test.kit.TestServiceException
-import org.zalando.test.kit.service.DockerContainerTestService.ready
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
@@ -39,16 +38,17 @@ class DockerContainerTestService(override val name: String,
                                  val portBindings: Set[PortBindingConfig] = Set.empty,
                                  val sharedFolders: Set[SharedFolderConfig] = Set.empty,
                                  val commandLineArguments: Seq[String] = Seq.empty)
-                                (implicit val readinessChecker: (DockerContainerTestService) ⇒ Future[Unit] = ready)
+                                (implicit val readinessChecker: (DockerContainerTestService) ⇒ Future[Unit])
   extends TestService with SuiteLifecycle with StrictLogging {
 
-  def this(config: DockerContainerConfig) = this(
+  def this(config: DockerContainerConfig)
+          (implicit readinessChecker: (DockerContainerTestService) ⇒ Future[Unit]) = this(
     config.serviceName.getOrElse(s"Docker container ${config.imageNameSubstring}"),
     config.imageNameSubstring,
     config.apiUri,
     config.portBindings,
     config.sharedFolders,
-    config.commandLineArguments)
+    config.commandLineArguments)(readinessChecker)
 
   type ContainerId = String
 
