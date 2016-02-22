@@ -10,9 +10,9 @@ import com.github.dockerjava.core.command.AttachContainerResultCallback
 import com.github.dockerjava.core.{DockerClientBuilder, DockerClientConfig}
 import com.typesafe.scalalogging.StrictLogging
 import org.zalando.test.kit.TestServiceException
+import org.zalando.test.kit.service.ReadinessNotifier.immediately
 
-import scala.concurrent.duration.{Duration, FiniteDuration}
-import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success, Try}
 
 case class HealthCheckConfig(url: String, timeout: FiniteDuration)
@@ -22,33 +22,32 @@ case class PortBindingConfig(internal: Int, external: Int)
 case class SharedFolderConfig(internal: String, external: String)
 
 case class DockerContainerConfig(imageNameSubstring: String,
-                                 apiUri: String,
+                                 dockerApiUri: String,
                                  serviceName: Option[String] = None,
                                  portBindings: Set[PortBindingConfig] = Set.empty,
                                  sharedFolders: Set[SharedFolderConfig] = Set.empty,
                                  commandLineArguments: Seq[String] = Seq.empty)
 
 object DockerContainerTestService {
-  implicit val ready: (DockerContainerTestService) ⇒ Future[Unit] = _ ⇒ Future.successful(())
+  def apply(config: DockerContainerConfig, readinessNotifier: ReadinessNotifier = immediately) =
+    new DockerContainerTestService(
+      config.serviceName.getOrElse(s"Docker container ${config.imageNameSubstring}"),
+      config.imageNameSubstring,
+      config.dockerApiUri,
+      config.portBindings,
+      config.sharedFolders,
+      config.commandLineArguments,
+      readinessNotifier)
 }
 
 class DockerContainerTestService(override val name: String,
                                  val imageNameSubstring: String,
-                                 val apiUri: String,
+                                 val dockerApiUri: String,
                                  val portBindings: Set[PortBindingConfig] = Set.empty,
                                  val sharedFolders: Set[SharedFolderConfig] = Set.empty,
-                                 val commandLineArguments: Seq[String] = Seq.empty)
-                                (implicit val readinessChecker: (DockerContainerTestService) ⇒ Future[Unit])
+                                 val commandLineArguments: Seq[String] = Seq.empty,
+                                 val readinessNotifier: ReadinessNotifier = immediately)
   extends TestService with SuiteLifecycle with StrictLogging {
-
-  def this(config: DockerContainerConfig)
-          (implicit readinessChecker: (DockerContainerTestService) ⇒ Future[Unit]) = this(
-    config.serviceName.getOrElse(s"Docker container ${config.imageNameSubstring}"),
-    config.imageNameSubstring,
-    config.apiUri,
-    config.portBindings,
-    config.sharedFolders,
-    config.commandLineArguments)(readinessChecker)
 
   type ContainerId = String
 
@@ -67,7 +66,7 @@ class DockerContainerTestService(override val name: String,
   }
 
   private def createDockerClient: Try[DockerClient] = Try {
-    DockerClientBuilder.getInstance(DockerClientConfig.createDefaultConfigBuilder().withUri(apiUri).build()).build()
+    DockerClientBuilder.getInstance(DockerClientConfig.createDefaultConfigBuilder().withUri(dockerApiUri).build()).build()
   }
 
   private def startDockerContainer(client: DockerClient,
@@ -155,7 +154,7 @@ class DockerContainerTestService(override val name: String,
       .withLogs()
       .exec(callback)
 
-    Await.ready(readinessChecker(this), Duration.Inf)
+    readinessNotifier.awaitReady()
     resultCallback
   }
 

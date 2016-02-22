@@ -16,7 +16,7 @@ class MockServerTestService(override val name: String, val port: Int, val host: 
     if (maybeMockServer.isDefined)
       maybeMockServer.get
     else
-      throw new IllegalStateException("MockServer is not initialized. Ensure beforeAll() is invoked in your test")
+      throw new IllegalStateException("MockServer is not initialized")
   }
 
   override def start(): Unit = {
