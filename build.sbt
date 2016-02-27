@@ -56,6 +56,12 @@ libraryDependencies += "org.scalaj" %% "scalaj-http" % "2.2.1"
 libraryDependencies += "com.github.kxbmap" % "configs_2.11" % "0.3.0" % "test"
 libraryDependencies += "com.typesafe" % "config" % "1.3.0" % "test"
 
+libraryDependencies ++=
+  Seq("org.specs2" %% "specs2-core",
+      "org.specs2" %% "specs2-junit",
+      "org.specs2" %% "specs2-gwt").map(_ % "3.7.1")
+
+
 lazy val providedDependencies = Seq(
   "org.mock-server" % "mockserver-netty" % "3.10.2",
   "com.github.docker-java" % "docker-java" % "2.1.4",
