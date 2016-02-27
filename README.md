@@ -58,7 +58,7 @@ or use one of the already implemented test services:
 
 2. Mixin trait to your spec
   * For [ScalaTest](http://scalatest.org/): [ScalatestServiceKit](/src/main/scala/org/zalando/test/kit/ScalatestServiceKit.scala)
-  * For [Specs2](https://etorreborre.github.io/specs2/): Not implemented, pull requests are welcome.
+  * For [Specs2](https://etorreborre.github.io/specs2/): [Specs2ServiceKit](/src/main/scala/org/zalando/test/kit/Specs2ServiceKit.scala)
 
 3. Define services used by your spec:
   ```scala
