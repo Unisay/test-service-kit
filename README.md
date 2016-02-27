@@ -1,6 +1,8 @@
 Test Service Kit
 ================
 
+[![Join the chat at https://gitter.im/zalando/test-service-kit](https://badges.gitter.im/zalando/test-service-kit.svg)](https://gitter.im/zalando/test-service-kit?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/zalando/test-service-kit.svg?branch=master)](https://travis-ci.org/zalando/test-service-kit)
 
 Scala framework that manages external services for tests (mock HTTP services, docker containers, databases, etc.)
