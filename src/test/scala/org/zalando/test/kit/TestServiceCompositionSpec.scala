@@ -2,7 +2,7 @@ package org.zalando.test.kit
 
 import com.typesafe.scalalogging.StrictLogging
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
-import org.zalando.test.kit.service.TestService
+import org.zalando.test.kit.service.ServicesFixture
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -11,7 +11,8 @@ class TestServiceCompositionSpec
     with GivenWhenThen
     with MustMatchers
     with ScalatestServiceKit
-    with StrictLogging {
+    with StrictLogging
+    with ServicesFixture {
 
   val colorService = new ColorService
   val materialService = new MaterialService
@@ -19,7 +20,7 @@ class TestServiceCompositionSpec
   lazy val clientService = new FactoryClientService
 
   override def testServices = (colorService inParallelWith materialService) andThen factoryService andThen clientService
-//  override def testServices = (colorService || materialService) >> factoryService >> clientService
+  //  override def testServices = (colorService || materialService) >> factoryService >> clientService
 
   scenario("test services are started and stopped in order") {
     /*
@@ -58,62 +59,3 @@ class TestServiceCompositionSpec
 
 }
 
-
-object Color extends Enumeration {
-  type Color = Value
-  val Red, Green, Blue = Value
-}
-
-object Material extends Enumeration {
-  type Material = Value
-  val Metal, Plastic = Value
-}
-
-import Color._
-import Material._
-
-trait EmulatedTestService extends TestService with StrictLogging {
-  var isStarted = false
-
-  logger.info(s"$name created")
-  override def beforeSuite(): Unit = {
-    Thread.sleep(100)
-    isStarted = true
-    logger.info(s"$name before suite")
-  }
-  override def beforeTest(): Unit = {
-    Thread.sleep(100)
-    logger.info(s"$name before test")
-  }
-  override def afterTest(): Unit = {
-    Thread.sleep(100)
-    logger.info(s"$name after test")
-  }
-  override def afterSuite(): Unit = {
-    Thread.sleep(100)
-    isStarted = false
-    logger.info(s"$name after suite")
-  }
-}
-
-class ColorService extends EmulatedTestService {
-  override def name = "Color"
-  def color = {
-    assert(isStarted)
-    Color.values.iterator.next()
-  }
-}
-
-class MaterialService extends EmulatedTestService {
-  override def name = "Material"
-  def material = {
-    assert(isStarted)
-    Material.values.iterator.next()
-  }
-}
-
-class FactoryService(val color: Color, val material: Material) extends EmulatedTestService {
-  override def name = s"Factory($color, $material)"
-}
-
-class FactoryClientService(override val name: String = "Factory client") extends EmulatedTestService
