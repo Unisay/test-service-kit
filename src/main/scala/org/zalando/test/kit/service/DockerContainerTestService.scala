@@ -28,18 +28,6 @@ case class DockerContainerConfig(imageNameSubstring: String,
                                  sharedFolders: Set[SharedFolderConfig] = Set.empty,
                                  commandLineArguments: Seq[String] = Seq.empty)
 
-object DockerContainerTestService {
-  def apply(config: DockerContainerConfig, readinessNotifier: ReadinessNotifier = immediately) =
-    new DockerContainerTestService(
-      config.serviceName.getOrElse(s"Docker container ${config.imageNameSubstring}"),
-      config.imageNameSubstring,
-      config.dockerApiUri,
-      config.portBindings,
-      config.sharedFolders,
-      config.commandLineArguments,
-      readinessNotifier)
-}
-
 class DockerContainerTestService(override val name: String,
                                  val imageNameSubstring: String,
                                  val dockerApiUri: String,
@@ -47,14 +35,23 @@ class DockerContainerTestService(override val name: String,
                                  val sharedFolders: Set[SharedFolderConfig] = Set.empty,
                                  val commandLineArguments: Seq[String] = Seq.empty,
                                  val readinessNotifier: ReadinessNotifier = immediately)
-  extends TestService with SuiteLifecycle with StrictLogging {
+  extends TestService with StrictLogging {
+
+  def this(config: DockerContainerConfig, readinessNotifier: ReadinessNotifier) = this(
+    config.serviceName.getOrElse(s"Docker container ${config.imageNameSubstring}"),
+    config.imageNameSubstring,
+    config.dockerApiUri,
+    config.portBindings,
+    config.sharedFolders,
+    config.commandLineArguments,
+    readinessNotifier)
 
   type ContainerId = String
 
   private var state: Try[(DockerClient, ContainerId, ResultCallback[Frame])] =
     Failure(new RuntimeException("not initialized"))
 
-  override def start(): Unit = {
+  def start(): Unit = {
     state = for {
       client ← createDockerClient
       imageName <- findMostRecentImageName(client, imageNameSubstring)
@@ -177,7 +174,7 @@ class DockerContainerTestService(override val name: String,
     }
   }
 
-  override def stop(): Unit = state foreach {
+  def stop(): Unit = state foreach {
     case (client, id, attached) ⇒
       Try(attached.close())
       if (client.inspectContainerCmd(id).exec().getState.isRunning) {

@@ -3,8 +3,8 @@ package org.zalando.test.kit
 import com.github.kxbmap.configs.syntax._
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
-import org.zalando.test.kit.service.ReadinessNotifier.healthCheck
-import org.zalando.test.kit.service.{DockerContainerConfig, DockerContainerTestService}
+import org.zalando.test.kit.service.ReadinessNotifier.{healthCheck, immediately}
+import org.zalando.test.kit.service.{DockerContainerConfig, DockerContainerTestService, SuiteLifecycle, TestLifecycle}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
@@ -16,11 +16,13 @@ import scalaj.http._
 class DockerContainerTestServiceSpec extends FeatureSpec with GivenWhenThen with MustMatchers with ScalatestServiceKit {
 
   val config = ConfigFactory.load()
-  val container1 = DockerContainerTestService(config.get[DockerContainerConfig]("sample-container-1"))
 
-  private val config2 = config.get[DockerContainerConfig]("sample-container-2")
-  val container2 = DockerContainerTestService(config = config2,
-    readinessNotifier = healthCheck(s"http://localhost:${config2.portBindings.head.external}/health"))
+  val container1Config = config.get[DockerContainerConfig]("sample-container-1")
+  val container1 = new DockerContainerTestService(container1Config, immediately) with SuiteLifecycle
+
+  val container2Config = config.get[DockerContainerConfig]("sample-container-2")
+  val container2 = new DockerContainerTestService(container2Config,
+    healthCheck(s"http://localhost:${container2Config.portBindings.head.external}/health")) with TestLifecycle
 
   override def testServices = container1 inParallelWith container2
   override val cancelSuiteOnTestServiceException = true

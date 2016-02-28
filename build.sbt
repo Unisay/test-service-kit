@@ -46,7 +46,7 @@ pomExtra := (
         <url>https://github.com/Unisay</url>
       </developer>
     </developers>
-  )
+)
 
 val specs2Ver = "3.7.1"
 libraryDependencies += "com.typesafe.scala-logging" % "scala-logging_2.11" % "3.1.0"

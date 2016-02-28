@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 
 class ReadinessNotifierTest extends FlatSpec with ScalaFutures with MustMatchers with ScalatestServiceKit {
 
-  val sampleHealthCheck = new MockServerTestService("Sample resource", 8989)
+  val sampleHealthCheck = new MockServerTestService("Sample resource") with SuiteLifecycle
   override def testServices = sampleHealthCheck
 
   behavior of "ReadinessNotifier.immediately"
@@ -41,14 +41,14 @@ class ReadinessNotifierTest extends FlatSpec with ScalaFutures with MustMatchers
 
   it must "be ready if url responds with success (2XX)" in {
     sampleHealthCheck.expectResponseWithStatus(200, VerificationTimes.atLeast(1))
-    healthCheck(sampleHealthCheck.apiUrl, interval = 100.millis).awaitReady(1.second) mustBe Ready
+    healthCheck(sampleHealthCheck.url.get, interval = 100.millis).awaitReady(1.second) mustBe Ready
   }
 
   it must "timeout if url responds with error (not 2XX)" in {
     sampleHealthCheck.expectResponseWithStatus(500, VerificationTimes.atLeast(1))
     the [RuntimeException] thrownBy {
-      healthCheck(sampleHealthCheck.apiUrl, interval = 200.millis).awaitReady(1.second)
-    } must have message "Resource (http://localhost:8989) is not ready within duration (1 second)"
+      healthCheck(sampleHealthCheck.url.get, interval = 200.millis).awaitReady(1.second)
+    } must have message s"Resource (${sampleHealthCheck.url.get}) is not ready within duration (1 second)"
   }
 
 }

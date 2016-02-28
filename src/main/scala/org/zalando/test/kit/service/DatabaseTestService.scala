@@ -41,10 +41,6 @@ class DatabaseTestService(val config: DatabaseTestServiceConfig) extends TestSer
     logger.debug("Database tables truncated: "+ sb.toString)
   }
 
-  override def beforeSuite() = start()
-
-  override def afterSuite() = stop()
-
   override def beforeTest() = truncateTables()
 
   def executeQuery(query: String) = {

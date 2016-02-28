@@ -1,7 +1,7 @@
 package org.zalando.test.kit
 
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
-import org.zalando.test.kit.service.MockServerTestService
+import org.zalando.test.kit.service.{MockServerTestService, SuiteLifecycle, TestLifecycle}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalaj.http._
@@ -11,8 +11,11 @@ import scalaj.http._
   */
 class MockServerTestServiceSpec extends FeatureSpec with GivenWhenThen with MustMatchers with ScalatestServiceKit {
 
-  val sampleRestService1 = new MockServerTestService("Sample REST service mock 1", 8080) with SampleResponses
-  val sampleRestService2 = new MockServerTestService("Sample REST service mock 2", 8081) with SampleResponses
+  val sampleRestService1 = new MockServerTestService("Sample REST service mock 1")
+    with SuiteLifecycle with SampleResponses
+
+  val sampleRestService2 = new MockServerTestService("Sample REST service mock 2")
+    with TestLifecycle with SampleResponses
 
   override def testServices = sampleRestService1 || sampleRestService2
 
@@ -22,8 +25,8 @@ class MockServerTestServiceSpec extends FeatureSpec with GivenWhenThen with Must
     sampleRestService2.healthCheckRespondsWith("healthy 2")
 
     When("Actual requests are made")
-    val response1 = Http(s"${sampleRestService1.apiUrl}/health").asString
-    val response2 = Http(s"${sampleRestService2.apiUrl}/health").asString
+    val response1 = Http(s"${sampleRestService1.url.get}/health").asString
+    val response2 = Http(s"${sampleRestService2.url.get}/health").asString
 
     Then("Responses contain data from mocks")
     response1.is2xx mustBe true
@@ -37,8 +40,8 @@ class MockServerTestServiceSpec extends FeatureSpec with GivenWhenThen with Must
     Given("Sample REST service mock has its expectations reset before each test")
 
     When("Actual request is made")
-    val response1 = Http(s"${sampleRestService1.apiUrl}/health").asString
-    val response2 = Http(s"${sampleRestService2.apiUrl}/health").asString
+    val response1 = Http(s"${sampleRestService1.url.get}/health").asString
+    val response2 = Http(s"${sampleRestService2.url.get}/health").asString
 
     Then("Response contains no data from previously set expectation")
     response1.is4xx mustBe true

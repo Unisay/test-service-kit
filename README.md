@@ -63,9 +63,9 @@ or use one of the already implemented test services:
 3. Define services used by your spec:
   ```scala
   case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
-    val oauthApi = new MockServerTestService("Mocked REST API", 8080) 
-    val database = new DatabaseTestService(config.get[DatabaseTestServiceconfig]("database")) 
-    val container = new DockerContainerTestService(config.get[DockerContainerConfig]("docker-container"))
+    val oauthApi = new MockServerTestService("Mocked REST API", 8080) with SuiteLifecycle
+    val database = new DatabaseTestService(config.get[DatabaseTestServiceconfig]("database")) with SuiteLifecycle
+    val container = new DockerContainerTestService(config.get[DockerContainerConfig]("docker-container")) with TestLifecycle
   }
   ```
   
