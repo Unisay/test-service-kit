@@ -2,12 +2,12 @@ package org.zalando.test.kit.service
 
 trait TestLifecycle extends TestService {
 
-  override def beforeTest(): Unit = {
+  abstract override def beforeTest(): Unit = {
     start()
     super.beforeTest()
   }
 
-  override def afterTest(): Unit = {
+  abstract override def afterTest(): Unit = {
     super.afterTest()
     stop()
   }
