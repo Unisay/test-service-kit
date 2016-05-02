@@ -2,7 +2,7 @@ package org.zalando.test.kit.service
 
 import java.io.{BufferedReader, FileReader}
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgreSQL
+import com.opentable.db.postgres.embedded.EmbeddedPostgres
 import org.slf4j.LoggerFactory
 
 case class DatabaseTestServiceConfig(port: Int, truncateScript: String)
@@ -13,10 +13,10 @@ class DatabaseTestService(val config: DatabaseTestServiceConfig) extends TestSer
 
   private val logger = LoggerFactory.getLogger(classOf[DatabaseTestService])
 
-  var pg: EmbeddedPostgreSQL = _
+  var pg: EmbeddedPostgres = _
 
   def start() = {
-    pg = EmbeddedPostgreSQL.builder().setPort(config.port).start()
+    pg = EmbeddedPostgres.builder().setPort(config.port).start()
     logger.info(s"$name started at port ${pg.getPort}")
   }
 
@@ -78,6 +78,5 @@ class DatabaseTestService(val config: DatabaseTestServiceConfig) extends TestSer
 
     countResult
   }
-
 
 }

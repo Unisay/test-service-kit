@@ -1,12 +1,12 @@
 package org.zalando.test.kit.service
 
+import java.net.HttpURLConnection
 import java.util.concurrent._
 
 import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
-import scalaj.http.{Http ⇒ Get}
 
 sealed trait Ready
 case object Ready extends Ready
@@ -70,9 +70,20 @@ object ReadinessNotifier {
       val promise = Promise[Ready]()
       executor.scheduleAtFixedRate(new Runnable {
         override def run(): Unit = {
-          val response = Get(url).timeout(connectionTimeoutMs, readTimeoutMs).method(httpMethod).asString
-          logger.debug(s"Health check response: ${response.code}")
-          if (response.isNotError) {
+          logger.debug(s"Health check request $url")
+          val connection = new java.net.URL(url).openConnection().asInstanceOf[HttpURLConnection]
+          connection.setConnectTimeout(100)
+          connection.setReadTimeout(300)
+          val healthy = try {
+            val code: Int = connection.getResponseCode
+            logger.debug(s"Health check response: $code")
+            code >= 200 && code < 300
+          } catch {
+            case e: java.net.ConnectException =>
+              logger.debug(s"Connection failed ($url)")
+              false
+          }
+          if (healthy) {
             promise.success(Ready)
             executor.shutdown()
           }
@@ -81,6 +92,5 @@ object ReadinessNotifier {
       promise.future
     }
   }
-
 
 }
