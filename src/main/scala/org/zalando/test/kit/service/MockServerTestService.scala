@@ -3,10 +3,9 @@ package org.zalando.test.kit.service
 import com.typesafe.scalalogging.StrictLogging
 import org.mockserver.client.server.MockServerClient
 import org.mockserver.integration.ClientAndServer
-import org.scalatest.concurrent.AsyncAssertions
 
 class MockServerTestService(override val name: String, val host: String = "localhost", val port: Int = 0)
-  extends TestService with AsyncAssertions with StrictLogging with ExpectationVerification {
+  extends TestService with StrictLogging with ExpectationVerification {
 
   protected var maybeMockServer: Option[ClientAndServer] = None
 

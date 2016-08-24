@@ -1,8 +1,7 @@
-package org.zalando.test.kit
+package org.zalando.test.kit.service
 
 import org.specs2.mutable._
-import org.zalando.test.kit.service.ServicesFixture
-
+import org.zalando.test.kit.Specs2ServiceKit
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class Specs2TestServiceCompositionSpec extends Specification with Specs2ServiceKit with ServicesFixture {

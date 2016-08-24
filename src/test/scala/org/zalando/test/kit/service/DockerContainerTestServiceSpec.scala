@@ -1,11 +1,10 @@
-package org.zalando.test.kit
+package org.zalando.test.kit.service
 
 import com.github.kxbmap.configs.syntax._
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
+import org.zalando.test.kit.ScalatestServiceKit
 import org.zalando.test.kit.service.ReadinessNotifier.{healthCheck, immediately}
-import org.zalando.test.kit.service.{DockerContainerConfig, DockerContainerTestService, SuiteLifecycle, TestLifecycle}
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
 import scalaj.http._

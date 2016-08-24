@@ -1,9 +1,8 @@
-package org.zalando.test.kit
+package org.zalando.test.kit.service
 
 import com.typesafe.scalalogging.StrictLogging
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
-import org.zalando.test.kit.service.ServicesFixture
-
+import org.zalando.test.kit.ScalatestServiceKit
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestServiceCompositionSpec

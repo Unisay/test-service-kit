@@ -1,8 +1,7 @@
-package org.zalando.test.kit
+package org.zalando.test.kit.service
 
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
-import org.zalando.test.kit.service.{MockServerTestService, SuiteLifecycle, TestLifecycle}
-
+import org.zalando.test.kit.{SampleResponses, ScalatestServiceKit}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalaj.http._
 
