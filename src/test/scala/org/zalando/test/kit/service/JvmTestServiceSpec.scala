@@ -20,9 +20,12 @@ class JvmTestServiceSpec extends FlatSpec with MustMatchers {
   behavior of "JvmTestService"
 
   it must "start and stop" in {
-    testService.start()
-    Thread.sleep(2000)
-    testService.stop()
+    try {
+      testService.start()
+      Thread.sleep(2000)
+    } finally {
+      testService.stop()
+    }
 
     new String(outputStream.toByteArray, UTF_8) must startWith {
       "Test Application started with arguments: Hello World\nWorking..."

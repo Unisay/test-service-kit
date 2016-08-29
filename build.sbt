@@ -4,7 +4,7 @@ name := "test-service-kit"
 
 organization := "org.zalando"
 
-version := "4.2.1"
+version := "5.0.0"
 
 isSnapshot := false
 
