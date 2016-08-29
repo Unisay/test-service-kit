@@ -62,6 +62,8 @@ class DockerContainerTestService(override val name: String,
     state.failed.foreach(throw _)
   }
 
+  def reset(): Unit = {}
+
   private def createDockerClient: Try[DockerClient] = Try {
     DockerClientBuilder.getInstance(DockerClientConfig.createDefaultConfigBuilder().withUri(dockerApiUri).build()).build()
   }
@@ -106,7 +108,7 @@ class DockerContainerTestService(override val name: String,
     } else {
       val maybeFile = Option(getClass.getResource(absoluteOrRelativePath)).map(_.getFile)
       if (maybeFile.isEmpty)
-        throw new TestServiceException(s"Failed to find absolute path for: $absoluteOrRelativePath")
+        throw TestServiceException(s"Failed to find absolute path for: $absoluteOrRelativePath")
       maybeFile.get
     }
   }
@@ -118,7 +120,7 @@ class DockerContainerTestService(override val name: String,
           s"Detected docker host IP ($ip). It will be reachable from inside the container by domain name 'dockerhost'")
         ip
       case _ ⇒
-        throw new TestServiceException(
+        throw TestServiceException(
           "Failed to determine docker host IP by searching for a docker0, vboxnet0 or vboxnet1 network interface")
     }
 
@@ -169,7 +171,7 @@ class DockerContainerTestService(override val name: String,
       case Some(string) ⇒
         Success(string)
       case None ⇒
-        Failure(throw new TestServiceException(
+        Failure(throw TestServiceException(
           s"At least one docker image ($imageNameSubstring) has to be published locally"))
     }
   }

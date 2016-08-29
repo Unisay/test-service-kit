@@ -34,6 +34,8 @@ class JvmTestService(override val name: String,
     ()
   }
 
+  def reset(): Unit = {}
+
   def stop() = {
     maybeProcess.foreach { process ⇒
       if (process.isAlive) {

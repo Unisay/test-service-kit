@@ -18,6 +18,6 @@ trait SuiteLifecycle extends TestService {
   }
 
   def start(): Unit
-  def reset(): Unit = {}
+  def reset(): Unit
   def stop(): Unit
 }

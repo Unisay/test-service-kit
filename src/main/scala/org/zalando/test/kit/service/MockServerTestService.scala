@@ -24,6 +24,9 @@ class MockServerTestService(override val name: String, val host: String = "local
     logger.info("{} started", name)
   }
 
+  def reset(): Unit =
+    maybeMockServer.foreach(_.reset())
+
   def stop(): Unit = {
     maybeMockServer.foreach { mockServer =>
       logger.info("Stopping {}", name)

@@ -42,7 +42,7 @@ def stop(): Unit // called after each test
 ## Installation
 Add the test-service-kit dependency to your SBT project
 ```scala
-libraryDependencies += "org.zalando" %% "test-service-kit" % "4.0.0"
+libraryDependencies += "org.zalando" %% "test-service-kit" % "5.0.2"
 ```
 
 ## Usage
@@ -51,10 +51,11 @@ libraryDependencies += "org.zalando" %% "test-service-kit" % "4.0.0"
 or use one of the already implemented test services:
 
   * [MockServerTestService](/src/main/scala/org/zalando/test/kit/service/MockServerTestService.scala) to run [MockServer](http://www.mock-server.com) instance.
-    For example usage see [MockServerTestServiceSpec](/src/test/scala/org/zalando/test/kit/MockServerTestServiceSpec.scala)
+    For example usage see [MockServerTestServiceSpec](/src/test/scala/org/zalando/test/kit/service/MockServerTestServiceSpec.scala)
   * [DockerContainerTestService](/src/main/scala/org/zalando/test/kit/service/DockerContainerTestService.scala) to run any [Docker](https://www.docker.com/) container.
-    For example usage see [DockerContainerTestServiceSpec](/src/test/scala/org/zalando/test/kit/DockerContainerTestServiceSpec.scala)
+    For example usage see [DockerContainerTestServiceSpec](/src/test/scala/org/zalando/test/kit/service/DockerContainerTestServiceSpec.scala)
   * [DatabaseTestService](/src/main/scala/org/zalando/test/kit/service/DatabaseTestService.scala) to run embedded PostgreSQL server.
+    For example usage see [DatabaseTestServiceSpec](/src/test/scala/org/zalando/test/kit/service/DatabaseTestServiceDockerContainerTestServiceSpec.scala)
 
 2. Mixin trait to your spec
   * For [ScalaTest](http://scalatest.org/): [ScalatestServiceKit](/src/main/scala/org/zalando/test/kit/ScalatestServiceKit.scala)
@@ -63,8 +64,8 @@ or use one of the already implemented test services:
 3. Define services used by your spec:
   ```scala
   case MyCoolSpec extends FlatSpec with ScalatestServiceKit {
-    val oauthApi = new MockServerTestService("Mocked REST API", 8080) with SuiteLifecycle
-    val database = new DatabaseTestService(config.get[DatabaseTestServiceconfig]("database")) with SuiteLifecycle
+    val oauthApi = new MockServerTestService("Mocked REST API", port = 8080) with SuiteLifecycle
+    val database = new DatabaseTestService("Embedded Postgres", port = 5432) with SuiteLifecycle
     val container = new DockerContainerTestService(config.get[DockerContainerConfig]("docker-container")) with TestLifecycle
   }
   ```
