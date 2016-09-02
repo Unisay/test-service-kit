@@ -8,18 +8,23 @@ import scala.collection.JavaConversions._
 
 class JvmTestService(override val name: String,
                      mainClass: String,
-                     args: List[String] = Nil,
+                     jvmArgs: List[String] = Nil,
+                     programArgs: List[String] = Nil,
                      customClassPath: Option[String] = None,
                      output: PrintStream = System.out,
                      forceStop: Boolean = false) extends TestService with StrictLogging {
 
   lazy val maybeProcessBuilder = for {
-    fsep ← sys.props.get("file.separator")
-    psep ← sys.props.get("path.separator")
+    fileSeparator ← sys.props.get("file.separator")
+    pathSeparator ← sys.props.get("path.separator")
     javaHome ← sys.props.get("java.home")
-    javaPath = javaHome + fsep + "bin" + fsep + "java"
-    cp ← sys.props.get("java.class.path").flatMap(path ⇒ customClassPath.map(ccp ⇒ path + psep + ccp))
-  } yield new ProcessBuilder((javaPath :: "-cp" :: cp :: mainClass :: args).toArray:_*)
+    javaPath = javaHome + fileSeparator + "bin" + fileSeparator + "java"
+    cp ← sys.props.get("java.class.path").flatMap(path ⇒ customClassPath.map(ccp ⇒ path + pathSeparator + ccp))
+
+  } yield {
+    val arguments = (javaPath :: jvmArgs) ++ ("-cp" :: cp :: mainClass :: programArgs)
+    new ProcessBuilder(arguments: _*)
+  }
 
   var maybeProcess: Option[Process] = None
 

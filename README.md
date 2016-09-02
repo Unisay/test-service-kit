@@ -42,7 +42,7 @@ def stop(): Unit // called after each test
 ## Installation
 Add the test-service-kit dependency to your SBT project
 ```scala
-libraryDependencies += "org.zalando" %% "test-service-kit" % "5.0.2"
+libraryDependencies += "org.zalando" %% "test-service-kit" % "5.1.0"
 ```
 
 ## Usage
@@ -56,6 +56,8 @@ or use one of the already implemented test services:
     For example usage see [DockerContainerTestServiceSpec](/src/test/scala/org/zalando/test/kit/service/DockerContainerTestServiceSpec.scala)
   * [DatabaseTestService](/src/main/scala/org/zalando/test/kit/service/DatabaseTestService.scala) to run embedded PostgreSQL server.
     For example usage see [DatabaseTestServiceSpec](/src/test/scala/org/zalando/test/kit/service/DatabaseTestServiceDockerContainerTestServiceSpec.scala)
+  * [JvmTestService](/src/main/scala/org/zalando/test/kit/service/JvmTestService.scala) to run JVM process.
+    For example usage see [JvmTestServiceSpec](/src/test/scala/org/zalando/test/kit/service/JvmTestServiceSpec.scala)
 
 2. Mixin trait to your spec
   * For [ScalaTest](http://scalatest.org/): [ScalatestServiceKit](/src/main/scala/org/zalando/test/kit/ScalatestServiceKit.scala)
@@ -67,6 +69,7 @@ or use one of the already implemented test services:
     val oauthApi = new MockServerTestService("Mocked REST API", port = 8080) with SuiteLifecycle
     val database = new DatabaseTestService("Embedded Postgres", port = 5432) with SuiteLifecycle
     val container = new DockerContainerTestService(config.get[DockerContainerConfig]("docker-container")) with TestLifecycle
+    val app = new JvmTestService("My JVM App", mainClass = "org.zalando.test.kit.service.TestApplication") with SuiteLifecycle
   }
   ```
   

@@ -14,7 +14,8 @@ class JvmTestServiceSpec extends FlatSpec with MustMatchers with ScalatestServic
   val testService = new JvmTestService(
     name = "JVM Test Service",
     mainClass = TestApplication.getClass.getName.stripSuffix("$"),
-    args = List("Hello", "World"),
+    jvmArgs = List("-Xms64m", "-Xmx256m"),
+    programArgs = List("Hello", "World"),
     customClassPath = Some("target/scala-2.11/test-classes"),
     output = printStream
   ) with SuiteLifecycle
