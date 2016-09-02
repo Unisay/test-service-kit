@@ -29,7 +29,7 @@ sonatypeProfileName := "org.zalando"
 //usePgpKeyHex("BF5E171FB106E7AD")
 
 pomExtra := (
-  <url>https://github.com/zalando/scala-jsonapi</url>
+  <url>https://github.com/zalando-incubator/test-service-kit</url>
     <licenses>
       <license>
         <name>MIT</name>
@@ -38,8 +38,8 @@ pomExtra := (
       </license>
     </licenses>
     <scm>
-      <url>git@github.com:zalando/test-service-kit.git</url>
-      <connection>scm:git:git@github.com:zalando/test-service-kit.git</connection>
+      <url>git@github.com:zalando-incubator/test-service-kit.git</url>
+      <connection>scm:git:git@github.com:zalando-incubator/test-service-kit.git</connection>
     </scm>
     <developers>
       <developer>
