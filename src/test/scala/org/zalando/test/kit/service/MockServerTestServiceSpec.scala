@@ -24,8 +24,8 @@ class MockServerTestServiceSpec extends FeatureSpec with GivenWhenThen with Must
     sampleRestService2.healthCheckRespondsWith("healthy 2")
 
     When("Actual requests are made")
-    val response1 = Http(s"${sampleRestService1.url.get}/health").asString
-    val response2 = Http(s"${sampleRestService2.url.get}/health").asString
+    val response1 = Http(s"${sampleRestService1.url}/health").asString
+    val response2 = Http(s"${sampleRestService2.url}/health").asString
 
     Then("Responses contain data from mocks")
     response1.is2xx mustBe true
@@ -39,8 +39,8 @@ class MockServerTestServiceSpec extends FeatureSpec with GivenWhenThen with Must
     Given("Sample REST service mock has its expectations reset before each test")
 
     When("Actual request is made")
-    val response1 = Http(s"${sampleRestService1.url.get}/health").asString
-    val response2 = Http(s"${sampleRestService2.url.get}/health").asString
+    val response1 = Http(s"${sampleRestService1.url}/health").asString
+    val response2 = Http(s"${sampleRestService2.url}/health").asString
 
     Then("Response contains no data from previously set expectation")
     response1.is4xx mustBe true

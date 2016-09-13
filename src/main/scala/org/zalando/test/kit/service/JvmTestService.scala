@@ -56,6 +56,7 @@ class JvmTestService(override val name: String,
   }
 
   class StreamGobbler(val inputStream: InputStream, val printStream: PrintStream) extends Thread {
+    setDaemon(true)
     override def run(): Unit = {
       val reader = new BufferedReader(new InputStreamReader(inputStream, "utf-8"))
       reader.lines().forEach(new Consumer[String] {

@@ -25,7 +25,7 @@ class JvmTestServiceSpec extends FlatSpec with MustMatchers with ScalatestServic
   behavior of "JvmTestService"
 
   it must "start and stop" in {
-    Thread.sleep(2000)
+    Thread.sleep(1000)
     new String(outputStream.toByteArray, UTF_8) must startWith {
       "Test Application started with arguments: Hello World\nWorking..."
     }

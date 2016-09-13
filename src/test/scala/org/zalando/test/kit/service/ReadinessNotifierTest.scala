@@ -5,14 +5,13 @@ import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Milliseconds, Seconds, Span}
 import org.scalatest.{FlatSpec, MustMatchers}
-import org.zalando.test.kit.ScalatestServiceKit
+import org.zalando.test.kit.{SampleResponses, ScalatestServiceKit}
 import org.zalando.test.kit.service.ReadinessNotifier._
-
 import scala.concurrent.duration._
 
 class ReadinessNotifierTest extends FlatSpec with ScalaFutures with MustMatchers with ScalatestServiceKit {
 
-  val sampleHealthCheck = new MockServerTestService("Sample resource") with SuiteLifecycle
+  val sampleHealthCheck = new MockServerTestService("Sample resource") with SuiteLifecycle with SampleResponses
   override def testServices = sampleHealthCheck
 
   behavior of "ReadinessNotifier.immediately"
@@ -40,15 +39,15 @@ class ReadinessNotifierTest extends FlatSpec with ScalaFutures with MustMatchers
   behavior of "ReadinessNotifier.healthCheck"
 
   it must "be ready if url responds with success (2XX)" in {
-    sampleHealthCheck.expectResponseWithStatus(200, VerificationTimes.atLeast(1))
-    healthCheck(sampleHealthCheck.url.get, interval = 100.millis).awaitReady(1.second) mustBe Ready
+    sampleHealthCheck.expectResponseWithStatus(200)
+    healthCheck(sampleHealthCheck.url, interval = 100.millis).awaitReady(1.second) mustBe Ready
   }
 
   it must "timeout if url responds with error (not 2XX)" in {
-    sampleHealthCheck.expectResponseWithStatus(500, VerificationTimes.atLeast(1))
+    sampleHealthCheck.expectResponseWithStatus(500)
     the [RuntimeException] thrownBy {
-      healthCheck(sampleHealthCheck.url.get, interval = 200.millis).awaitReady(1.second)
-    } must have message s"Resource (${sampleHealthCheck.url.get}) is not ready within duration (1 second)"
+      healthCheck(sampleHealthCheck.url, interval = 200.millis).awaitReady(1.second)
+    } must have message s"Resource (${sampleHealthCheck.url}) is not ready within duration (1 second)"
   }
 
 }

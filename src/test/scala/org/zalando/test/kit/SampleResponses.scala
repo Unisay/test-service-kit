@@ -9,8 +9,11 @@ trait SampleResponses {
   this: MockServerTestService ⇒
 
   def healthCheckRespondsWith(body: String): Unit =
-    mockServer
-      .when(verify(request.withPath("/health")))
+    client
+      .when(request.withPath("/health"))
       .respond(response.withBody(body))
+
+  def expectResponseWithStatus(status: Int): Unit =
+    client.when(request()).respond(response.withStatusCode(status))
 
 }
