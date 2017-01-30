@@ -6,7 +6,7 @@ import org.zalando.test.kit.service.MockServerTestService
 
 
 trait SampleResponses {
-  this: MockServerTestService ⇒
+  this: MockServerTestService =>
 
   def healthCheckRespondsWith(body: String): Unit =
     client

@@ -9,22 +9,22 @@ trait TestServiceKit extends StrictLogging {
 
   def testServices: Composition
 
-  def beforeSuite(): Unit = testServices.visitInOrder { service ⇒
+  def beforeSuite(): Unit = testServices.visitInOrder { service =>
     logger.trace(s"Visiting ${service.name} before suite")
     service.beforeSuite()
   }
 
-  def beforeTest(): Unit = testServices.visitInOrder { service ⇒
+  def beforeTest(): Unit = testServices.visitInOrder { service =>
     logger.trace(s"Visiting ${service.name} before test")
     service.beforeTest()
   }
 
-  def afterTest(): Unit = testServices.visitInReverseOrder { service ⇒
+  def afterTest(): Unit = testServices.visitInReverseOrder { service =>
     logger.trace(s"Visiting ${service.name} after test")
     service.afterTest()
   }
 
-  def afterSuite(): Unit = testServices.visitInReverseOrder { service ⇒
+  def afterSuite(): Unit = testServices.visitInReverseOrder { service =>
     logger.trace(s"Visiting ${service.name} after suite")
     service.afterSuite()
   }

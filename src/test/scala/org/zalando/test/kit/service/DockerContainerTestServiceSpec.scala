@@ -1,6 +1,6 @@
 package org.zalando.test.kit.service
 
-import com.github.kxbmap.configs.syntax._
+import configs.syntax._
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{FeatureSpec, GivenWhenThen, MustMatchers}
 import org.zalando.test.kit.ScalatestServiceKit
@@ -16,10 +16,10 @@ class DockerContainerTestServiceSpec extends FeatureSpec with GivenWhenThen with
 
   val config = ConfigFactory.load()
 
-  val container1Config = config.get[DockerContainerConfig]("sample-container-1")
+  val container1Config = config.get[DockerContainerConfig]("sample-container-1").value
   val container1 = new DockerContainerTestService(container1Config, immediately) with SuiteLifecycle
 
-  val container2Config = config.get[DockerContainerConfig]("sample-container-2")
+  val container2Config = config.get[DockerContainerConfig]("sample-container-2").value
   val container2 = new DockerContainerTestService(container2Config,
     healthCheck(s"http://localhost:${container2Config.portBindings.head.external}/health")) with TestLifecycle
 

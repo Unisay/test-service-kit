@@ -11,6 +11,7 @@ import com.github.dockerjava.core.{DockerClientBuilder, DockerClientConfig}
 import com.typesafe.scalalogging.StrictLogging
 import org.zalando.test.kit.TestServiceException
 import org.zalando.test.kit.service.ReadinessNotifier.immediately
+import scala.collection.JavaConverters._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success, Try}
@@ -75,18 +76,18 @@ class DockerContainerTestService(override val name: String,
                                    sharedFolders: Set[SharedFolderConfig]): Try[ContainerId] = Try {
 
     val containerId = client.createContainerCmd(imageName)
-      .withExposedPorts(portBindings.map(binding ⇒ ExposedPort.tcp(binding.internal)).toSeq: _*)
+      .withExposedPorts(portBindings.map(binding => ExposedPort.tcp(binding.internal)).toSeq: _*)
       .withExtraHosts(extraHosts)
       .withPortBindings {
         val bindings = new Ports()
-        portBindings.foreach { binding ⇒
+        portBindings.foreach { binding =>
           bindings.bind(ExposedPort.tcp(binding.internal), Ports.Binding(binding.external))
         }
         bindings
       }
       .withCmd(commandLineArguments: _*)
       .withBinds(
-        sharedFolders.map { sharedFolderConfig ⇒
+        sharedFolders.map { sharedFolderConfig =>
           new Bind(makeAbsolutePath(sharedFolderConfig.external), new Volume(sharedFolderConfig.internal))
         }.toSeq: _*
       )
@@ -115,21 +116,20 @@ class DockerContainerTestService(override val name: String,
 
   private def dockerHostIp: String =
     interfaceIp("docker0").orElse(interfaceIp("vboxnet0")).orElse(interfaceIp("vboxnet1")) match {
-      case Some(ip) ⇒
+      case Some(ip) =>
         logger.info(
           s"Detected docker host IP ($ip). It will be reachable from inside the container by domain name 'dockerhost'")
         ip
-      case _ ⇒
+      case _ =>
         throw TestServiceException(
           "Failed to determine docker host IP by searching for a docker0, vboxnet0 or vboxnet1 network interface")
     }
 
   private def interfaceIp(networkInterfaceName: String): Option[String] = {
-    import scala.collection.JavaConversions._
     NetworkInterface
-      .getNetworkInterfaces.toList
+      .getNetworkInterfaces.asScala.toList
       .filter(_.getDisplayName == networkInterfaceName)
-      .flatMap(_.getInetAddresses)
+      .flatMap(_.getInetAddresses.asScala.toList)
       .filter(_.isInstanceOf[Inet4Address])
       .map(_.getHostAddress)
       .headOption
@@ -158,26 +158,26 @@ class DockerContainerTestService(override val name: String,
   }
 
   private def findMostRecentImageName(client: DockerClient, substring: String): Try[String] = {
-    import scala.collection.JavaConversions._
     client
       .listImagesCmd()
       .exec()
       .iterator()
+      .asScala
       .toList
       .filter(_.getRepoTags.head.contains(substring))
-      .sortWith((image1, image2) ⇒ image1.getCreated.compareTo(image2.getCreated) > 0)
+      .sortWith((image1, image2) => image1.getCreated.compareTo(image2.getCreated) > 0)
       .flatMap(_.getRepoTags)
       .headOption match {
-      case Some(string) ⇒
+      case Some(string) =>
         Success(string)
-      case None ⇒
+      case None =>
         Failure(throw TestServiceException(
           s"At least one docker image ($imageNameSubstring) has to be published locally"))
     }
   }
 
   def stop(): Unit = state foreach {
-    case (client, id, attached) ⇒
+    case (client, id, attached) =>
       Try(attached.close())
       if (client.inspectContainerCmd(id).exec().getState.isRunning) {
         logger.info(s"Stopping docker container: $id")

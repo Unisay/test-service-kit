@@ -21,7 +21,7 @@ trait ReadinessNotifier {
     try {
       Await.result(whenReady(), atMost)
     } catch {
-      case e: TimeoutException ⇒
+      case e: TimeoutException =>
         timeOut()
         throw new RuntimeException(timeOutMessage(atMost), e)
     }
