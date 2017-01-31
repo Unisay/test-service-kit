@@ -42,7 +42,7 @@ def stop(): Unit // called after each test
 ## Installation
 Add the test-service-kit dependency to your SBT project
 ```scala
-libraryDependencies += "org.zalando" %% "test-service-kit" % "5.1.0"
+libraryDependencies += "org.zalando" %% "test-service-kit" % "6.0.0"
 ```
 
 ## Usage
