@@ -2,60 +2,18 @@ import sbt.Keys._
 
 name := "test-service-kit"
 
-organization := "org.zalando"
+organization := "com.github.Unisay"
 
-version := "6.0.0"
+version := "7.0.0"
 
-isSnapshot := false
-
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.2"
 
 crossScalaVersions := Seq("2.11.8", scalaVersion.value)
 
-publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
-  else
-    Some("releases" at nexus + "service/local/staging/deploy/maven2")
-}
-
-publishMavenStyle := true
-
-publishArtifact in Test := false
-
-pomIncludeRepository := { _ => false }
-
-sonatypeProfileName := "org.zalando"
-
-//usePgpKeyHex("BF5E171FB106E7AD")
-
-pomExtra := (
-  <url>https://github.com/zalando-incubator/test-service-kit</url>
-    <licenses>
-      <license>
-        <name>MIT</name>
-        <url>http://opensource.org/licenses/MIT</url>
-        <distribution>repo</distribution>
-      </license>
-    </licenses>
-    <scm>
-      <url>git@github.com:zalando-incubator/test-service-kit.git</url>
-      <connection>scm:git:git@github.com:zalando-incubator/test-service-kit.git</connection>
-    </scm>
-    <developers>
-      <developer>
-        <id>ylazaryev</id>
-        <name>Yuriy Lazaryev</name>
-        <url>https://github.com/Unisay</url>
-      </developer>
-    </developers>
-)
-
 val specs2Ver = "3.8.7"
-libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0"
-libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.21"
-libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.7"
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.6.0"
+libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.25"
+libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
 libraryDependencies += "org.scalaj" %% "scalaj-http" % "2.3.0"
 libraryDependencies += ("org.scalatest" %% "scalatest" % "3.0.1")
 libraryDependencies += "org.specs2" %% "specs2-core" % specs2Ver
@@ -63,7 +21,7 @@ libraryDependencies += "org.specs2" %% "specs2-junit" % specs2Ver
 libraryDependencies += "org.specs2" %% "specs2-gwt" % specs2Ver
 
 libraryDependencies += "com.github.kxbmap" %% "configs" % "0.4.4" % "test"
-libraryDependencies += "com.typesafe" % "config" % "1.3.0" % "test"
+libraryDependencies += "com.typesafe" % "config" % "1.3.1" % "test"
 
 lazy val providedDependencies = Seq(
   ("org.mock-server" % "mockserver-netty" % "3.10.4")
